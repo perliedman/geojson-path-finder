@@ -1,6 +1,8 @@
 GeoJSON Path Finder
 ===================
 
+[![Build status](https://travis-ci.org/perliedman/geojson-path-finder.png)](https://travis-ci.org/perliedman/geojson-path-finder)
+
 Find shortest path through a network of GeoJSON.
 
 Given a network of GeoJSON `LineString`s, GeoJSON Path Finder will find the shortest path between two points in the network. This might be useful for automatic route searches in smaller networks, where setting up a real route planner like OSRM is too much work,
