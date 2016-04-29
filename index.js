@@ -16,7 +16,9 @@ var networkLayer = L.geoJson(network).addTo(map);
 map.fitBounds(networkLayer.getBounds());
 
 var control = L.Routing.control({
-    router: new Router(network)
+    router: new Router(network),
+    routeWhileDragging: true,
+    routeDragInterval: 100
 }).addTo(map);
 
 control.setWaypoints([
