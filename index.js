@@ -91,8 +91,8 @@ PathFinder.prototype = {
         var start = this._keyFn(this._roundCoord(a.geometry.coordinates)),
             finish = this._keyFn(this._roundCoord(b.geometry.coordinates));
 
-        this._createPhantom(start);
-        this._createPhantom(finish);
+        var phantomStart = this._createPhantom(start);
+        var phantomEnd = this._createPhantom(finish);
 
         var path = this._graph.shortestPath(start, finish);
 
@@ -118,6 +118,9 @@ PathFinder.prototype = {
         } else {
             return null;
         }
+
+        this._removePhantom(phantomStart);
+        this._removePhantom(phantomEnd);
     },
 
     _roundCoord: function(c) {
@@ -127,7 +130,7 @@ PathFinder.prototype = {
     },
 
     _createPhantom: function(n) {
-        if (this._compact.graph[n]) return;
+        if (this._compact.graph[n]) return null;
 
         var phantom = compactNode(n, this._vertices, this._compact.graph, this._topo.vertices);
         this._compact.graph[n] = phantom.edges;
@@ -141,5 +144,21 @@ PathFinder.prototype = {
             coords.reverse();
             this._compact.coordinates[neighbor][n] = coords;
         }.bind(this));
+
+        return n;
+    },
+
+    _removePhantom: function(n) {
+        if (!n) return;
+
+        Object.keys(this._compact.graph[n]).forEach(function(neighbor) {
+            delete this._compact.graph[neighbor][n];
+        }.bind(this));
+        Object.keys(this._compact.coordinates[n]).forEach(function(neighbor) {
+            delete this._compact.coordinates[neighbor][n];
+        }.bind(this));
+
+        delete this._compact.graph[n];
+        delete this._compact.coordinates[n];
     }
 };
