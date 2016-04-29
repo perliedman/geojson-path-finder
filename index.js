@@ -5,6 +5,52 @@ var Graph = require('node-dijkstra'),
 
 module.exports = PathFinder;
 
+function findNextEnd(v, prev, vertices, ends, vertexCoords) {
+    var weight = 0,
+        coordinates = [];
+
+    while (!ends[v]) {
+        var edges = vertices[v],
+            next = Object.keys(edges).filter(function(k) { return k !== prev; })[0];
+        weight += edges[next];
+        coordinates.push(vertexCoords[v]);
+        prev = v;
+        v = next;
+    }
+
+    return { vertex: v, weight: weight, coordinates: coordinates };
+}
+
+function compactNode(k, vertices, ends, vertexCoords) {
+    var neighbors = vertices[k];
+    return Object.keys(neighbors).reduce(function(result, j) {
+        var neighbor = findNextEnd(j, k, vertices, ends, vertexCoords);
+        var weight = neighbors[j] + neighbor.weight;
+        if (neighbor.vertex !== k && (!result.edges[neighbor.vertex] || result.edges[neighbor.vertex] > weight)) {
+            result.edges[neighbor.vertex] = weight;
+            result.coordinates[neighbor.vertex] = [vertexCoords[k]].concat(neighbor.coordinates);
+        }
+        return result;
+    }, {edges: {}, coordinates: {}});
+}
+
+function compact(vertices, vertexCoords) {
+    var ends = Object.keys(vertices).reduce(function(es, k) {
+        var vertex = vertices[k];
+        if (Object.keys(vertex).length !== 2) {
+            es[k] = vertex;
+        }
+        return es;
+    }, {});
+
+    return Object.keys(ends).reduce(function(result, k) {
+        var compacted = compactNode(k, vertices, ends, vertexCoords);
+        result.graph[k] = compacted.edges;
+        result.coordinates[k] = compacted.coordinates;
+        return result;
+    }, {graph: {}, coordinates: {}});
+}
+
 function PathFinder(geojson, options) {
     options = options || {};
     
@@ -36,21 +82,32 @@ function PathFinder(geojson, options) {
         return g;
     }, {});
 
-    this._graph = new Graph(this._vertices);
+    this._compact = compact(this._vertices, this._topo.vertices);
+    this._graph = new Graph(this._compact.graph);
 }
 
 PathFinder.prototype = {
     findPath: function(a, b) {
         var start = this._keyFn(this._roundCoord(a.geometry.coordinates)),
-            finish = this._keyFn(this._roundCoord(b.geometry.coordinates)),
-            path = this._graph.shortestPath(start, finish);
+            finish = this._keyFn(this._roundCoord(b.geometry.coordinates));
+
+        this._createPhantom(start);
+        this._createPhantom(finish);
+
+        var path = this._graph.shortestPath(start, finish);
 
         if (path) {
             return {
-                path: path.map(function(v) { return this._topo.vertices[v]; }.bind(this)),
+                path: path.reduce(function(cs, v, i, vs) {
+                    if (i > 0) {
+                        cs = cs.concat(this._compact.coordinates[vs[i - 1]][v]);
+                    }
+
+                    return cs;
+                }.bind(this), []).concat([this._topo.vertices[finish]]),
                 weight: path.reduce(function(sum, v, i, vs) {
                     if (i > 0) {
-                        var v0 = this._vertices[vs[i - 1]],
+                        var v0 = this._compact.graph[vs[i - 1]],
                             w = v0[v];
                         sum += w;
                     }
@@ -66,6 +123,23 @@ PathFinder.prototype = {
     _roundCoord: function(c) {
         return c.map(function(c) {
             return Math.round(c / this._precision) * this._precision;
+        }.bind(this));
+    },
+
+    _createPhantom: function(n) {
+        if (this._compact.graph[n]) return;
+
+        var phantom = compactNode(n, this._vertices, this._compact.graph, this._topo.vertices);
+        this._compact.graph[n] = phantom.edges;
+        this._compact.coordinates[n] = phantom.coordinates;
+
+        // Add reverse edges from targets to phantom node
+        Object.keys(phantom.edges).forEach(function(neighbor) {
+            this._compact.graph[neighbor][n] = phantom.edges[neighbor];
+            var coords = phantom.coordinates[neighbor].slice(1);
+            coords.push(this._topo.vertices[neighbor])
+            coords.reverse();
+            this._compact.coordinates[neighbor][n] = coords;
         }.bind(this));
     }
 };
