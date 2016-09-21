@@ -26,7 +26,7 @@ function topology(geojson, options) {
 
     var vertices = explode(geojson).features.reduce(function(cs, f) {
             var rc = roundCoord(f.geometry.coordinates);
-            cs[keyFn(rc)] = rc;
+            cs[keyFn(rc)] = f.geometry.coordinates;
             return cs;
         }, {}),
         edges = geoJsonReduce(geojson, function(es, f) {
