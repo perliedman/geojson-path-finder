@@ -84,6 +84,10 @@ function PathFinder(geojson, options) {
 
     this._compact = compact(this._vertices, this._topo.vertices);
     this._graph = new Graph(this._compact.graph);
+
+    if (Object.keys(this._compact.graph).length === 0) {
+        throw new Error('Compacted graph contains no forks (topology has no intersections).');
+    }
 }
 
 PathFinder.prototype = {

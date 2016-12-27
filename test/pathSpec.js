@@ -87,3 +87,18 @@ test('can find path (complex)', function(t) {
     t.ok(path.weight, 'path has a weight');
     t.end();
 });
+
+test('can\'t find path (advent of code)', function(t) {
+    try {
+        new PathFinder(require('./advent24.json'), {
+            weightFn: function(a, b) {
+                var dx = a[0] - b[0];
+                var dy = a[1] - b[1];
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+        });
+        t.fail('Expected to throw exception for trivial topology');
+    } catch (e) {
+        t.end();
+    }
+});
