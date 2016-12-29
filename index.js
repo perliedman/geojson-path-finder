@@ -1,4 +1,4 @@
-var Graph = require('node-dijkstra'),
+var findPath = require('./dijkstra'),
     topology = require('./topology'),
     compactor = require('./compactor')
     point = require('turf-point'),
@@ -38,7 +38,6 @@ function PathFinder(geojson, options) {
     }, {});
 
     this._compact = compactor.compactGraph(this._vertices, this._topo.vertices);
-    this._graph = new Graph(this._compact.graph);
 
     if (Object.keys(this._compact.graph).length === 0) {
         throw new Error('Compacted graph contains no forks (topology has no intersections).');
@@ -53,9 +52,11 @@ PathFinder.prototype = {
         var phantomStart = this._createPhantom(start);
         var phantomEnd = this._createPhantom(finish);
 
-        var path = this._graph.shortestPath(start, finish);
+        var path = findPath(this._compact.graph, start, finish);
 
         if (path) {
+            var weight = path[0];
+            path = path[1];
             return {
                 path: path.reduce(function(cs, v, i, vs) {
                     if (i > 0) {
@@ -64,15 +65,7 @@ PathFinder.prototype = {
 
                     return cs;
                 }.bind(this), []).concat([this._topo.vertices[finish]]),
-                weight: path.reduce(function(sum, v, i, vs) {
-                    if (i > 0) {
-                        var v0 = this._compact.graph[vs[i - 1]],
-                            w = v0[v];
-                        sum += w;
-                    }
-
-                    return sum;
-                }.bind(this), 0)
+                weight: weight
             };
         } else {
             return null;
