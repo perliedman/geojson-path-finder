@@ -1,7 +1,9 @@
 <html>
 <head>
     <meta charset="utf-8"/>
-    <title>GeoJSON Path Finder Demo</title>
+    <title>GeoJSON Path Finder - Serverless, offline routing in the browser</title>
+    <link rel="stylesheet" type="text/css" href="normalize.css">
+    <link rel="stylesheet" type="text/css" href="skeleton.css">
     <link rel="stylesheet" type="text/css" href="leaflet.css">
     <link rel="stylesheet" type="text/css" href="leaflet-routing-machine.css">
     <style type="text/css">
@@ -10,34 +12,123 @@
             margin: 0;
         }
 
+        .header {
+            padding-top: 1.8em;
+            text-align: center;
+        }
+
+        .header p {
+            font-size: 125%;
+        }
+
         #map {
             position: absolute;
             width: 100%;
-            height: 100%;
+            height: 55%;
         }
 
-        #info {
-            font-family: sans-serif;
-            font-size: 12px;
-            position: absolute;
-            left: 12px;
-            bottom: 12px;
-            width: 240px;
-            height: 140px;
-            background: white;
-            border-radius: 4px;
-            padding: 6px;
-            box-shadow: 0 0 4px black;
+        .content {
+            position: relative;
+            top: 55%;
+            border-top: 2px solid rgba(0, 0, 0. 0.4);
+        }
+
+        .leaflet-routing-alt h3 {
+            text-align: right;
+            font-size: 200%;
+            font-weight: bold;
+        }
+
+        .leaflet-routing-container {
+            border: none !important;
+            box-shadow: none;
+            background: transparent;
+            color: white;
+            text-shadow: 1px 1px 1px black;
         }
     </style>
 </head>
 <body>
     <div id="map"></div>
-    <div id="info">
-        <h3>GeoJSON Path Finder</h3>
-        <p>Completely server-less routing in the browser.</p>
-        <p>Drag markers to change route!</p>
-        <a href="https://github.com/perliedman/geojson-path-finder">Fork me on GitHub!</a>
+    <div class="content">
+        <div class="container">
+            <div class="row">
+                <section class="header">
+                    <h1>GeoJSON Path Finder</h1>
+                    <p>Serverless, offline routing in the browser</p>
+                    <nav>
+                        <a class="button button-primary" href="#about">About</a>
+                        <a class="button button-primary" href="#using">Using</a>
+                        <a class="button button-primary" href="https://github.com/perliedman/geojson-path-finder">GitHub</a>
+                    </nav>
+                </section>
+                <p>
+                    <a name="about"></a>
+                    GeoJSON Path Finder is a standalone JavaScript library for routing/path finding
+                    using GeoJSON as input. It can run offline in the browser without any server, or
+                    as a part of a Node.js application. It is ideal for simpler use cases where a more complete routing engine like OSRM
+                    or GraphHopper is overkill or not possible.
+                </p>
+                <p>
+                    Given a road network in the form of a <a href="http://geojson.org/">GeoJSON</a> <code>FeatureCollection</code> of <code>LineString</code> features, the library builds a routable graph which can perform fast shortest path searches. In the demo above, the road network for a smaller sized city (data from <a href="https://www.openstreetmap.org/">OpenStreetMap</a>) is used:
+                </p>
+                <ul id="info-container"></ul>
+                <p>
+                    As can be seen by dragging the waypoint markers, GeoJSON Path Finder runs fast for interactive feedback with a graph
+                    of this size.
+                </p>
+                <p>
+                    The library comes without any user interface, and can easily be integrated in any routing application. The demo
+                    above uses <a href="http://leafletjs.com/">Leaflet</a> and <a href="http://www.liedman.net/leaflet-routing-machine/">Leaflet Routing Machine</a> for the user interface.
+                </p>
+
+                <h2><a name="using"></a>Using</h2>
+                <p>
+                    GeoJSON Path Finder is distributed through <code>npm</code>:
+                    <pre><code>npm install --save geojson-path-finder</code></pre>
+                </p>
+                <p>
+                    The API is exposed through the class <code>PathFinder</code>, which is created with the GeoJSON network used
+                    for routing:
+                </p>
+                <pre><code>var PathFinder = require('geojson-path-finder'),
+    geojson = require('./network.json');
+
+var pathFinder = new PathFinder(geojson);</code></pre>
+                <p>
+                    The network must be a GeoJSON <code>FeatureCollection</code>, where the features have <code>LineString</code>
+                    geometries. The network will be built into a topology, so that lines that start and end, or cross, at the same coordinate are joined so that you can find a path from one feature to the other. By default, coordinates very
+                    close to each other will also be snapped together; by default coordinates with less than 0.00001 difference in
+                    latitude or longitude will be considered the same, but this precision can be adjusted with the
+                    <code>precision</code> option:
+                    <pre><code>var pathFinder = new PathFinder(geojson, { precision: 1e-3 });</code></pre>
+                </p>
+                <p>
+                    By default, the <em>cost</em> of going from one node in the network to another is determined simply by
+                    the geographic distance between the two nodes. This means that, by default, shortest paths will be found.
+                    You can however override this by providing a cost calculation function through the <code>weightFn</code> option:
+                    <pre><code>var pathFinder = new PathFinder(geojson, {
+    weightFn: function(a, b, props) {
+        var dx = a[0] - b[0];
+        var dy = a[1] - b[1];
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+});</code></pre>
+                    The weight function is passed two coordinate arrays (in GeoJSON axis order), as well as the feature properties
+                    that are associated with this feature, and should return a numeric value for the cost
+                    of travelling between the two coordinates.
+                </p>
+                <p>
+                    To find the shortest (or lowest cost) route between to points, use the <code>findPath</code> method:
+                    <pre><code>var path = pathfinder.findPath(start, finish);</code></pre>                    
+                    <code>start</code> and <code>finish</code> <em>must</em> be GeoJSON <code>Point</code> features, where the coordinates are within the routing network, or at least
+                    possible to snap to the network with the <code>PathFinder</code>'s precision.
+                </p>
+                <p>
+                    If a route can be found, an object with two properties: <code>path</code> and <code>weight</code>, is returned, where <code>path</code> is the coordinates the path runs through, and <code>weight</code> is the total weight (distance) of the path.
+                </p>
+            </div>
+        </div>
     </div>
 
     <script type="text/javascript" src="bundle.js"></script>

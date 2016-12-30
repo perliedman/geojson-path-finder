@@ -8,7 +8,7 @@ require('leaflet-routing-machine');
 
 module.exports = L.Class.extend({
     initialize: function(geojson) {
-        this._pathFinder = new PathFinder(geojson);
+        this._pathFinder = new PathFinder(geojson, { precision: 1e-9 });
         this._points = explode(geojson);
     },
 
