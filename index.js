@@ -22,7 +22,8 @@ function PathFinder(geojson, options) {
     this._vertices = topo.edges.reduce(function(g, edge) {
         var a = edge[0],
             b = edge[1],
-            w = weightFn(topo.vertices[a], topo.vertices[b]),
+            props = edge[2],
+            w = weightFn(topo.vertices[a], topo.vertices[b], props),
             concatEdge = function(startNode, endNode, weight) {
                 var v = g[startNode];
                 if (!v) {
