@@ -1,6 +1,5 @@
 var L = require('leaflet'),
     Router = require('./router'),
-    network = require('./network.json'),
     util = require('./util'),
     extent = require('turf-extent');
     gauge = require('gauge-progress')(),
@@ -17,23 +16,26 @@ L.tileLayer('https://api.mapbox.com/v4/mapbox.outdoors/{z}/{x}/{y}{r}.png?access
     })
     .addTo(map);
 
+gauge.start();
 var xhr = new XMLHttpRequest();
-xhr.open('GET', 'network.json');
-xhr.onload = function() {
-    gauge.stop();
-    if (xhr.status === 200) {
-        initialize(JSON.parse(xhr.responseText));
-    }
-    else {
-        alert('Could not load routing network :( HTTP ' + xhr.status);
-    }
-};
 xhr.addEventListener('progress', function(oEvent) {
     if (oEvent.lengthComputable) {
         gauge.progress(oEvent.loaded, oEvent.total);
     }
 });
-gauge.start();
+xhr.onload = function() {
+    gauge.stop();
+    if (xhr.status === 200) {
+        gauge.progress(100, 100);
+        setTimeout(function() {
+            initialize(JSON.parse(xhr.responseText));
+        });
+    }
+    else {
+        alert('Could not load routing network :( HTTP ' + xhr.status);
+    }
+};
+xhr.open('GET', 'network.json');
 xhr.send();
 
 function initialize(network) {
