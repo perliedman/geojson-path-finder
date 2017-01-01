@@ -6,7 +6,8 @@ module.exports = {
 function findNextEnd(v, prev, vertices, ends, vertexCoords) {
     var weight = 0,
         reverseWeight = 0,
-        coordinates = [];
+        coordinates = [],
+        path = [];
 
     while (!ends[v]) {
         var edges = vertices[v];
@@ -16,12 +17,24 @@ function findNextEnd(v, prev, vertices, ends, vertexCoords) {
         var next = Object.keys(edges).filter(function(k) { return k !== prev; })[0];
         weight += edges[next];
         reverseWeight += vertices[next][v];
+
+        if (path.indexOf(v) >= 0) {
+            ends[v] = vertices[v];
+            break;
+        }
+
         coordinates.push(vertexCoords[v]);
+        path.push(v);
         prev = v;
         v = next;
     }
 
-    return { vertex: v, weight: weight, reverseWeight: reverseWeight, coordinates: coordinates };
+    return {
+        vertex: v,
+        weight: weight,
+        reverseWeight: reverseWeight,
+        coordinates: coordinates 
+    };
 }
 
 function compactNode(k, vertices, ends, vertexCoords) {
