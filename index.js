@@ -24,16 +24,31 @@ function PathFinder(geojson, options) {
             b = edge[1],
             props = edge[2],
             w = weightFn(topo.vertices[a], topo.vertices[b], props),
+            makeEdgeList = function(node) {
+                if (!g[node]) {
+                    g[node] = {};
+                }
+            },
             concatEdge = function(startNode, endNode, weight) {
                 var v = g[startNode];
-                if (!v) {
-                    v = g[startNode] = {};
-                }
                 v[endNode] = weight;
             };
 
-        concatEdge(a, b, w);
-        concatEdge(b, a, w);
+        makeEdgeList(a);
+        makeEdgeList(b);
+        if (w) {
+            if (w instanceof Object) {
+                if (w.forward) {
+                    concatEdge(a, b, w.forward);
+                }
+                if (w.backward) {
+                    concatEdge(b, a, w.backward);
+                }
+            } else {
+                concatEdge(a, b, w);
+                concatEdge(b, a, w);
+            }
+        }
 
         return g;
     }, {});

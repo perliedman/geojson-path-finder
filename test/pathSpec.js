@@ -1,7 +1,8 @@
 var PathFinder = require('../'),
     geojson = require('./network.json'),
     test = require('tape'),
-    point = require('turf-point');
+    point = require('turf-point'),
+    distance = require('turf-distance');
 
 test('can create PathFinder', function(t) {
     var pathfinder = new PathFinder(geojson);
@@ -85,6 +86,8 @@ test('can find path (complex)', function(t) {
     t.ok(path, 'has path');
     t.ok(path.path, 'path has vertices');
     t.ok(path.weight, 'path has a weight');
+    t.equal(path.path.length, 220, 'path has expected length');
+    t.equal(path.weight, 6.377083181844789, 'path has expected weight');
     t.end();
 });
 
@@ -101,4 +104,44 @@ test('can\'t find path (advent of code)', function(t) {
     } catch (e) {
         t.end();
     }
+});
+
+test('can make oneway network', function(t) {
+    var network = {
+        type: 'FeatureCollection',
+        features: [
+            {
+                type: 'Feature',
+                geometry: {
+                    type: 'LineString',
+                    coordinates: [[0, 0], [1, 0]]
+                }
+            },
+            {
+                type: 'Feature',
+                geometry: {
+                    type: 'LineString',
+                    coordinates: [[1, 0], [1, 1]]
+                }
+            }
+        ]
+    };
+
+    var pathfinder = new PathFinder(network, {
+            weightFn: function(a, b) {
+                return {
+                    forward: distance(point(a), point(b))
+                };
+            }        
+        }),
+        path = pathfinder.findPath(point([0, 0]), point([1, 1]));
+
+    t.ok(path, 'has path');
+    t.ok(path.path, 'path has vertices');
+    t.ok(path.weight, 'path has a weight');
+
+    path = pathfinder.findPath(point([1, 1]), point([0, 0]));
+    t.notOk(path, 'does not have path');
+
+    t.end();
 });

@@ -8,8 +8,11 @@ function findNextEnd(v, prev, vertices, ends, vertexCoords) {
         coordinates = [];
 
     while (!ends[v]) {
-        var edges = vertices[v],
-            next = Object.keys(edges).filter(function(k) { return k !== prev; })[0];
+        var edges = vertices[v];
+
+        if (!edges) { break; }
+
+        var next = Object.keys(edges).filter(function(k) { return k !== prev; })[0];
         weight += edges[next];
         coordinates.push(vertexCoords[v]);
         prev = v;
