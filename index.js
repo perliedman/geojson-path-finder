@@ -104,13 +104,9 @@ PathFinder.prototype = {
         this._compact.graph[n] = phantom.edges;
         this._compact.coordinates[n] = phantom.coordinates;
 
-        // Add reverse edges from targets to phantom node
-        Object.keys(phantom.edges).forEach(function(neighbor) {
-            this._compact.graph[neighbor][n] = phantom.edges[neighbor];
-            var coords = phantom.coordinates[neighbor].slice(1);
-            coords.push(this._topo.vertices[neighbor])
-            coords.reverse();
-            this._compact.coordinates[neighbor][n] = coords;
+        Object.keys(phantom.incomingEdges).forEach(function(neighbor) {
+            this._compact.graph[neighbor][n] = phantom.incomingEdges[neighbor];
+            this._compact.coordinates[neighbor][n] = phantom.incomingCoordinates[neighbor];
         }.bind(this));
 
         return n;

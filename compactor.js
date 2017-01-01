@@ -5,6 +5,7 @@ module.exports = {
 
 function findNextEnd(v, prev, vertices, ends, vertexCoords) {
     var weight = 0,
+        reverseWeight = 0,
         coordinates = [];
 
     while (!ends[v]) {
@@ -14,12 +15,13 @@ function findNextEnd(v, prev, vertices, ends, vertexCoords) {
 
         var next = Object.keys(edges).filter(function(k) { return k !== prev; })[0];
         weight += edges[next];
+        reverseWeight += vertices[next][v];
         coordinates.push(vertexCoords[v]);
         prev = v;
         v = next;
     }
 
-    return { vertex: v, weight: weight, coordinates: coordinates };
+    return { vertex: v, weight: weight, reverseWeight: reverseWeight, coordinates: coordinates };
 }
 
 function compactNode(k, vertices, ends, vertexCoords) {
@@ -27,18 +29,40 @@ function compactNode(k, vertices, ends, vertexCoords) {
     return Object.keys(neighbors).reduce(function(result, j) {
         var neighbor = findNextEnd(j, k, vertices, ends, vertexCoords);
         var weight = neighbors[j] + neighbor.weight;
-        if (neighbor.vertex !== k && (!result.edges[neighbor.vertex] || result.edges[neighbor.vertex] > weight)) {
-            result.edges[neighbor.vertex] = weight;
-            result.coordinates[neighbor.vertex] = [vertexCoords[k]].concat(neighbor.coordinates);
+        var reverseWeight = neighbors[j] + neighbor.reverseWeight;
+        if (neighbor.vertex !== k) {
+            if (!result.edges[neighbor.vertex] || result.edges[neighbor.vertex] > weight) {
+                result.edges[neighbor.vertex] = weight;
+                result.coordinates[neighbor.vertex] = [vertexCoords[k]].concat(neighbor.coordinates);
+            }
+            if (!isNaN(reverseWeight) && (!result.incomingEdges[neighbor.vertex] || result.incomingEdges[neighbor.vertex] > reverseWeight)) {
+                result.incomingEdges[neighbor.vertex] = reverseWeight;
+                var coordinates = [vertexCoords[k]].concat(neighbor.coordinates);
+                coordinates.reverse();
+                result.incomingCoordinates[neighbor.vertex] = coordinates;
+            }
         }
         return result;
-    }, {edges: {}, coordinates: {}});
+    }, {edges: {}, incomingEdges: {}, coordinates: {}, incomingCoordinates: {}});
 }
 
 function compactGraph(vertices, vertexCoords) {
     var ends = Object.keys(vertices).reduce(function(es, k) {
         var vertex = vertices[k];
-        if (Object.keys(vertex).length !== 2) {
+        var edges = Object.keys(vertex);
+        var numberEdges = edges.length;
+
+        if (numberEdges === 1) {
+            var other = vertices[edges[0]];
+            remove = !other[k];
+        } else if (numberEdges === 2) {
+            remove = edges.filter(function(n) {
+                return vertices[n][k];
+            }).length === numberEdges;
+        } else {
+            remove = false;
+        }
+        if (!remove) {
             es[k] = vertex;
         }
         return es;
