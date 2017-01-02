@@ -43,7 +43,7 @@ function initialize(network) {
     var bounds = L.latLngBounds([bbox[1], bbox[0]], [bbox[3], bbox[2]]);
     map.fitBounds(bounds);
 
-    L.rectangle(bounds, {color: 'orange', weight: 1, fillOpacity: 0.03}).addTo(map);
+    L.rectangle(bounds, {color: 'orange', weight: 1, fillOpacity: 0.03, interactive: false}).addTo(map);
 
     var router = new Router(network),
         control = L.Routing.control({
@@ -53,8 +53,8 @@ function initialize(network) {
         }).addTo(map);
 
     control.setWaypoints([
-        [57.744, 12.03],
-        [57.67, 11.89],
+        [57.740, 11.99],
+        [57.68, 11.90],
     ]);
 
     var totalDistance = network.features.reduce(function(total, feature) {
@@ -80,5 +80,19 @@ function initialize(network) {
     ].forEach(function(info) {
         var li = L.DomUtil.create('li', '', infoContainer);
         li.innerHTML = info[0] + ': <strong>' + Math.round(info[1]) + (info[2] ? '&nbsp;' + info[2] : '') + '</strong>';
+    });
+
+    var networkLayer = L.layerGroup().addTo(map),
+        vertices = router._pathFinder._topo.vertices,
+        renderer = L.canvas().addTo(map);
+    nodeNames.forEach(function(nodeName) {
+        var node = graph[nodeName];
+        Object.keys(node).forEach(function(neighbor) {
+            var c1 = vertices[nodeName],
+                c2 = vertices[neighbor];
+            L.polyline([[c1[1], c1[0]], [c2[1], c2[0]]], { weight: 1, opacity: 0.4, renderer: renderer, interactive: false })
+                .addTo(networkLayer)
+                .bringToBack();
+        });
     });
 }

@@ -115,8 +115,18 @@ var pathFinder = new PathFinder(geojson);</code></pre>
     }
 });</code></pre>
                     The weight function is passed two coordinate arrays (in GeoJSON axis order), as well as the feature properties
-                    that are associated with this feature, and should return a numeric value for the cost
-                    of travelling between the two coordinates.
+                    that are associated with this feature, and should return either:
+                    <ul>
+                        <li>
+                            a numeric value for the cost of travelling between the two coordinates; in this case, the cost is assumed
+                            to be the same going from <code>a</code> to <code>b</code> as going from <code>b</code> to <code>a</code>
+                        </li>
+                        <li>
+                            an object with two properties: <code>forward</code> and <code>backward</code>; in this case,
+                            <code>forward</code> denotes the cost of going from <code>a</code> to <code>b</code>, and
+                            <code>backward</code> the cost of going from <code>b</code> to <code>a</code>; setting either
+                            to <code>0</code>, <code>null</code> or <code>undefined</code> will prevent taking that direction,
+                            the segment will be a oneway.
                 </p>
                 <p>
                     To find the shortest (or lowest cost) route between to points, use the <code>findPath</code> method:
