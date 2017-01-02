@@ -34,9 +34,9 @@ function PathFinder(geojson, options) {
                 v[endNode] = weight;
             };
 
-        makeEdgeList(a);
-        makeEdgeList(b);
         if (w) {
+            makeEdgeList(a);
+            makeEdgeList(b);
             if (w instanceof Object) {
                 if (w.forward) {
                     concatEdge(a, b, w.forward);
