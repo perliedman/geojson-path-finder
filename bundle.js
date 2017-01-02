@@ -8,6 +8,7 @@ var L = require('leaflet'),
 
 L.Icon.Default.imagePath = 'images/';
 
+require('leaflet.icon.glyph');
 require('leaflet-routing-machine');
 
 var map = L.map('map');
@@ -48,6 +49,11 @@ function initialize(network) {
 
     var router = new Router(network),
         control = L.Routing.control({
+            createMarker: function(i, wp) {
+                return L.marker(wp.latLng, {
+                    icon: L.icon.glyph({ prefix: '', glyph: String.fromCharCode(65 + i) })
+                })
+            },
             router: router,
             routeWhileDragging: true,
             routeDragInterval: 100
@@ -83,22 +89,26 @@ function initialize(network) {
         li.innerHTML = info[0] + ': <strong>' + Math.round(info[1]) + (info[2] ? '&nbsp;' + info[2] : '') + '</strong>';
     });
 
-    // var networkLayer = L.layerGroup().addTo(map),
-    //     vertices = router._pathFinder._topo.vertices,
-    //     renderer = L.canvas().addTo(map);
-    // nodeNames.forEach(function(nodeName) {
-    //     var node = graph[nodeName];
-    //     Object.keys(node).forEach(function(neighbor) {
-    //         var c1 = vertices[nodeName],
-    //             c2 = vertices[neighbor];
-    //         L.polyline([[c1[1], c1[0]], [c2[1], c2[0]]], { weight: 1, opacity: 0.4, renderer: renderer, interactive: false })
-    //             .addTo(networkLayer)
-    //             .bringToBack();
-    //     });
-    // });
+    var networkLayer = L.layerGroup(),
+        vertices = router._pathFinder._topo.vertices,
+        renderer = L.canvas().addTo(map);
+    nodeNames.forEach(function(nodeName) {
+        var node = graph[nodeName];
+        Object.keys(node).forEach(function(neighbor) {
+            var c1 = vertices[nodeName],
+                c2 = vertices[neighbor];
+            L.polyline([[c1[1], c1[0]], [c2[1], c2[0]]], { weight: 1, opacity: 0.4, renderer: renderer, interactive: false })
+                .addTo(networkLayer)
+                .bringToBack();
+        });
+    });
+
+    L.control.layers(null, {
+        'Routing Network': networkLayer
+    }, { position: 'bottomright'}).addTo(map);
 }
 
-},{"./router":72,"./util":73,"@turf/line-distance":5,"gauge-progress":14,"leaflet":26,"leaflet-routing-machine":25,"turf-extent":35}],2:[function(require,module,exports){
+},{"./router":73,"./util":74,"@turf/line-distance":5,"gauge-progress":14,"leaflet":27,"leaflet-routing-machine":25,"leaflet.icon.glyph":26,"turf-extent":36}],2:[function(require,module,exports){
 var getCoord = require('@turf/invariant').getCoord;
 var radiansToDistance = require('@turf/helpers').radiansToDistance;
 //http://en.wikipedia.org/wiki/Haversine_formula
@@ -904,7 +914,7 @@ function TypedError(args) {
 }
 
 
-},{"camelize":8,"string-template":31,"xtend/mutable":9}],11:[function(require,module,exports){
+},{"camelize":8,"string-template":32,"xtend/mutable":9}],11:[function(require,module,exports){
 'use strict';
 
 var OneVersionConstraint = require('individual/one-version');
@@ -956,7 +966,7 @@ function h () {
   return vdom.h.apply(vdom, arguments)
 }
 
-},{"virtual-dom":44,"virtual-dom/virtual-hyperscript/svg":58}],14:[function(require,module,exports){
+},{"virtual-dom":45,"virtual-dom/virtual-hyperscript/svg":59}],14:[function(require,module,exports){
 var defaults = require('./defaults')
 var render = require('./render')
 var vdom = require('virtual-dom')
@@ -1059,7 +1069,7 @@ Gauge.prototype._progress = function progress (value, total) {
   return 'M' + this.size + ',' + (this.size - this.r) + ' A' + this.r + ',' + this.r + ',' + 0 + ',' + center + ',' + 1 + ',' + rx + ',' + ry
 }
 
-},{"./defaults":12,"./render":16,"main-loop":27,"virtual-dom":44}],15:[function(require,module,exports){
+},{"./defaults":12,"./render":16,"main-loop":28,"virtual-dom":45}],15:[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -1214,7 +1224,7 @@ module.exports = function(graph, start, end) {
 
     return null;
 }
-},{"tinyqueue":32}],19:[function(require,module,exports){
+},{"tinyqueue":33}],19:[function(require,module,exports){
 var findPath = require('./dijkstra'),
     topology = require('./topology'),
     compactor = require('./compactor')
@@ -1344,7 +1354,7 @@ PathFinder.prototype = {
     }
 };
 
-},{"./compactor":17,"./dijkstra":18,"./topology":20,"turf-distance":33,"turf-point":40}],20:[function(require,module,exports){
+},{"./compactor":17,"./dijkstra":18,"./topology":20,"turf-distance":34,"turf-point":41}],20:[function(require,module,exports){
 var explode = require('turf-explode');
 
 module.exports = topology;
@@ -1411,7 +1421,7 @@ function topology(geojson, options) {
     };
 }
 
-},{"turf-explode":34}],21:[function(require,module,exports){
+},{"turf-explode":35}],21:[function(require,module,exports){
 (function (global){
 var topLevel = typeof global !== 'undefined' ? global :
     typeof window !== 'undefined' ? window : {}
@@ -4528,6 +4538,123 @@ if (typeof module === 'object' && module.exports) {
 });
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],26:[function(require,module,exports){
+
+
+
+L.Icon.Glyph = L.Icon.extend({
+	options: {
+		iconSize: [25, 41],
+		iconAnchor:  [12, 41],
+		popupAnchor: [1, -34],
+		shadowSize:  [41, 41],
+// 		iconUrl: 'glyph-marker-icon.png',
+// 		iconSize: [35, 45],
+// 		iconAnchor:   [17, 42],
+// 		popupAnchor: [1, -32],
+// 		shadowAnchor: [10, 12],
+// 		shadowSize: [36, 16],
+// 		bgPos: (Point)
+		className: '',
+		prefix: '',
+		glyph: 'home',
+		glyphColor: 'white',
+		glyphSize: '11px',	// in CSS units
+		glyphAnchor: [0, -7]	// In pixels, counting from the center of the image.
+	},
+
+	createIcon: function () {
+		var div = document.createElement('div'),
+			options = this.options;
+
+		if (options.glyph) {
+			div.appendChild(this._createGlyph());
+		}
+
+		this._setIconStyles(div, options.className);
+		return div;
+	},
+
+	_createGlyph: function() {
+		var glyphClass,
+		    textContent,
+		    options = this.options;
+
+		if (!options.prefix) {
+			glyphClass = '';
+			textContent = options.glyph;
+		} else if(options.glyph.slice(0, options.prefix.length+1) === options.prefix + "-") {
+			glyphClass = options.glyph;
+		} else {
+			glyphClass = options.prefix + "-" + options.glyph;
+		}
+
+		var span = L.DomUtil.create('span', options.prefix + ' ' + glyphClass);
+		span.style.fontSize = options.glyphSize;
+		span.style.color = options.glyphColor;
+		span.style.width = options.iconSize[0] + 'px';
+		span.style.lineHeight = options.iconSize[1] + 'px';
+		span.style.textAlign = 'center';
+		span.style.marginLeft = options.glyphAnchor[0] + 'px';
+		span.style.marginTop = options.glyphAnchor[1] + 'px';
+		span.style.pointerEvents = 'none';
+
+		if (textContent) {
+			span.innerHTML = textContent;
+			span.style.display = 'inline-block';
+		}
+
+		return span;
+	},
+
+	_setIconStyles: function (div, name) {
+		if (name === 'shadow') {
+			return L.Icon.prototype._setIconStyles.call(this, div, name);
+		}
+
+		var options = this.options,
+		    size = L.point(options['iconSize']),
+		    anchor = L.point(options.iconAnchor);
+
+		if (!anchor && size) {
+			anchor = size.divideBy(2, true);
+		}
+
+		div.className = 'leaflet-marker-icon leaflet-glyph-icon ' + name;
+		var src = this._getIconUrl('icon');
+		if (src) {
+			div.style.backgroundImage = "url('" + src + "')";
+		}
+
+		if (options.bgPos) {
+			div.style.backgroundPosition = (-options.bgPos.x) + 'px ' + (-options.bgPos.y) + 'px';
+		}
+		if (options.bgSize) {
+			div.style.backgroundSize = (options.bgSize.x) + 'px ' + (options.bgSize.y) + 'px';
+		}
+
+		if (anchor) {
+			div.style.marginLeft = (-anchor.x) + 'px';
+			div.style.marginTop  = (-anchor.y) + 'px';
+		}
+
+		if (size) {
+			div.style.width  = size.x + 'px';
+			div.style.height = size.y + 'px';
+		}
+	}
+});
+
+L.icon.glyph = function (options) {
+	return new L.Icon.Glyph(options);
+};
+
+
+// Base64-encoded version of glyph-marker-icon.png
+L.Icon.Glyph.prototype.options.iconUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAApCAYAAADAk4LOAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAN1wAADdcBQiibeAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAUlSURBVFjDrZdLiBxVFIb/e289uqt6kkx6zIiIoKgLRReKuMhCcaOIAUEIiCCE4CIPggZ8kBjooPgM0TiYEUUjqBGchZqAQlyYRTA+kJiJQiJGMjN5zYzT3dP1rrr3HBeTjDGTSfc8Dvyruud89Z9z6kIJdBj31763MivsJXKuZYF6dak5++2mh7NOcsXVHq6sHbhOK/24kOJJMO4AE1vKygwZhxlKSHGKiD+RSu09vOXB43OCrHz96y6T2lsh+OmKXzFdlbLne2UopSAupBhjECcZgjDMgiiSxPhcK/nCr1sfOtcWcm/tq9uEsL4rl0vdK67pKVu2jUwTMk0wBBAzpBCQAnAtiZIlwWQwPlHPglZQAFj1Y23VwVkh92zbd59U+Kanp+p2L12mooKQ5AbcpuclS6LiKoRhxOfHzhXMcs3PtVV7Z0DufXH/LSzpSG9vr1/p6kIz0dDUrvx/IYXAsrJCkWc4e/Z0Zpgf+KX26A/TkNtrXziesY9Xq8tvWNZdVfVYg7hzwKVv3O3ZiKMWj46OTrq5fdOh1x5pSADwjdzo2nbv0u6qqkca2jCIMGcZAuqRhu8vEX7ZK2V2WgMAcXdtvyeKbPS662+osCohzMycHVweniNREoShoZO5KYobpciSh23bFq7rIUgNiLFghRkBlg2v7GlpiccsCHrcryzxUk3zmsNskeYGvt/lxVH4hMWEu9xSWaQFYQ7L1B6iGZ5bBoy+zWKiHiltFHpqeIsVhWaosg1iqlgg4wAAEYEXsV3EmNppJmExMFYUxfVSuIs6E0sI5FkBBhLJzH9laQxLSjBj0WQJgSJPweDTkknvS4JGbCuxKOt7UY4lEQfNnAu9TzLxN2nUdAQTLAEw8YIlAVgAkmDCSBL75eCutSeY+GTUqqNkqUVxUbIl4qgJo4vWzecrhyQAMJldYf1MXLLl1EIsYBZgoGwpRI2zMTPtGBhYbSQAlJF9lieRzNMIriVBzPOWawvoIkYaNC0u9IcAIAHgp75NLQl8ENbPZJ6jgAU48RyFqHEuZyE+Pda/vjENAQBD5s209Y+kPJlyM4+r3lUS0AWSyVEhpHnjYu1pyO+7N4ywwPvhxHDiuwo8j1b5rkQwMZIziYHBXetPzIAAgIV8exZOSMoieI6aU5vKtgR0jqw1JtiYbZfW/R/kSN+mcWbxdtwYjn1XTd9B7cQAfNdCWB/OhBR7jvWv/3tWCAAoO3ktjyZZJ0HHbsq2AooERVQXzPKly2vOgPz29jNNBr+e1IcSz5YAM4hmFzPDtyWS+lDK4N2DfU+dbgsBAFHyd+oszE3agt/GjWcrUBEjj5sQBb96pXpXhAzueDJi4u1p41TsuQpCiFln4bkKeXMoJeadg++tG+sYAgBBXOo3RRrruAnfkWDmGfIdCeQhiiQgQbxjtlqzQk59vCZlNluL5lDiORLyMjcA4DsKeXM4AfDKxa97ThAAqPaMfaR1Nq6jOiqOAhOm5TsKJg1QZGGRedY7V6tzVcjBWk1D0JZ8cigt2RJSimkXnqOgW8MxQLUTb6wN5g0BgGPV0c9BekTH41xx5YXrQ8FkTRgdpxU7ea9djbYQ1GokmJ43wUhWtgRcS04tQjAcw9CWw29tThYOAXD03XVfMps/TTTOy30blDZgiqxFK6p7OsnvCDJ1UD9LyUjORoPDkUQyPfdHbXW+qJCjfRsOwOAoNY4z6Xz01rHq3k5zO4ZMHTabYSIhJD87MLB64f8Ys8WdG/tfBljMJedfwY+s/2P4Pv8AAAAASUVORK5CYII=';
+
+
+
+},{}],27:[function(require,module,exports){
 /*
  Leaflet 1.0.2, a JS library for interactive maps. http://leafletjs.com
  (c) 2010-2016 Vladimir Agafonkin, (c) 2010-2011 CloudMade
@@ -17698,7 +17825,7 @@ L.control.layers = function (baseLayers, overlays, options) {
 
 }(window, document));
 
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 var raf = require("raf")
 var TypedError = require("error/typed")
 
@@ -17780,7 +17907,7 @@ function main(initialState, view, opts) {
     }
 }
 
-},{"error/typed":10,"raf":30}],28:[function(require,module,exports){
+},{"error/typed":10,"raf":31}],29:[function(require,module,exports){
 (function (process){
 // Generated by CoffeeScript 1.6.3
 (function() {
@@ -17820,7 +17947,7 @@ function main(initialState, view, opts) {
 */
 
 }).call(this,require('_process'))
-},{"_process":29}],29:[function(require,module,exports){
+},{"_process":30}],30:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -18002,7 +18129,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 var now = require('performance-now')
   , global = typeof window === 'undefined' ? {} : window
   , vendors = ['moz', 'webkit']
@@ -18084,7 +18211,7 @@ module.exports.cancel = function() {
   caf.apply(global, arguments)
 }
 
-},{"performance-now":28}],31:[function(require,module,exports){
+},{"performance-now":29}],32:[function(require,module,exports){
 var nargs = /\{([0-9a-zA-Z]+)\}/g
 var slice = Array.prototype.slice
 
@@ -18120,7 +18247,7 @@ function template(string) {
     })
 }
 
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 'use strict';
 
 module.exports = TinyQueue;
@@ -18201,7 +18328,7 @@ function swap(data, i, j) {
     data[j] = tmp;
 }
 
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 var invariant = require('turf-invariant');
 //http://en.wikipedia.org/wiki/Haversine_formula
 //http://www.movable-type.co.uk/scripts/latlong.html
@@ -18293,7 +18420,7 @@ function toRad(degree) {
   return degree * Math.PI / 180;
 }
 
-},{"turf-invariant":37}],34:[function(require,module,exports){
+},{"turf-invariant":38}],35:[function(require,module,exports){
 var featureCollection = require('turf-featurecollection');
 var each = require('turf-meta').coordEach;
 var point = require('turf-point');
@@ -18339,7 +18466,7 @@ module.exports = function(layer) {
   return featureCollection(points);
 };
 
-},{"turf-featurecollection":36,"turf-meta":38,"turf-point":40}],35:[function(require,module,exports){
+},{"turf-featurecollection":37,"turf-meta":39,"turf-point":41}],36:[function(require,module,exports){
 var each = require('turf-meta').coordEach;
 
 /**
@@ -18409,7 +18536,7 @@ module.exports = function(layer) {
     return extent;
 };
 
-},{"turf-meta":38}],36:[function(require,module,exports){
+},{"turf-meta":39}],37:[function(require,module,exports){
 /**
  * Takes one or more {@link Feature|Features} and creates a {@link FeatureCollection}
  *
@@ -18435,7 +18562,7 @@ module.exports = function(features){
   };
 };
 
-},{}],37:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 module.exports.geojsonType = geojsonType;
 module.exports.collectionOf = collectionOf;
 module.exports.featureOf = featureOf;
@@ -18503,7 +18630,7 @@ function collectionOf(value, type, name) {
     }
 }
 
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 /**
  * Lazily iterate over coordinates in any GeoJSON object, similar to
  * Array.forEach.
@@ -18643,7 +18770,7 @@ function propReduce(layer, callback, memo) {
 }
 module.exports.propReduce = propReduce;
 
-},{}],39:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 var distance = require('turf-distance');
 
 /**
@@ -18726,7 +18853,7 @@ module.exports = function(targetPoint, points){
   return nearestPoint;
 }
 
-},{"turf-distance":33}],40:[function(require,module,exports){
+},{"turf-distance":34}],41:[function(require,module,exports){
 /**
  * Takes coordinates and properties (optional) and returns a new {@link Point} feature.
  *
@@ -18758,22 +18885,22 @@ module.exports = function(coordinates, properties) {
   };
 };
 
-},{}],41:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 var createElement = require("./vdom/create-element.js")
 
 module.exports = createElement
 
-},{"./vdom/create-element.js":47}],42:[function(require,module,exports){
+},{"./vdom/create-element.js":48}],43:[function(require,module,exports){
 var diff = require("./vtree/diff.js")
 
 module.exports = diff
 
-},{"./vtree/diff.js":70}],43:[function(require,module,exports){
+},{"./vtree/diff.js":71}],44:[function(require,module,exports){
 var h = require("./virtual-hyperscript/index.js")
 
 module.exports = h
 
-},{"./virtual-hyperscript/index.js":55}],44:[function(require,module,exports){
+},{"./virtual-hyperscript/index.js":56}],45:[function(require,module,exports){
 var diff = require("./diff.js")
 var patch = require("./patch.js")
 var h = require("./h.js")
@@ -18790,12 +18917,12 @@ module.exports = {
     VText: VText
 }
 
-},{"./create-element.js":41,"./diff.js":42,"./h.js":43,"./patch.js":45,"./vnode/vnode.js":66,"./vnode/vtext.js":68}],45:[function(require,module,exports){
+},{"./create-element.js":42,"./diff.js":43,"./h.js":44,"./patch.js":46,"./vnode/vnode.js":67,"./vnode/vtext.js":69}],46:[function(require,module,exports){
 var patch = require("./vdom/patch.js")
 
 module.exports = patch
 
-},{"./vdom/patch.js":50}],46:[function(require,module,exports){
+},{"./vdom/patch.js":51}],47:[function(require,module,exports){
 var isObject = require("is-object")
 var isHook = require("../vnode/is-vhook.js")
 
@@ -18894,7 +19021,7 @@ function getPrototype(value) {
     }
 }
 
-},{"../vnode/is-vhook.js":61,"is-object":24}],47:[function(require,module,exports){
+},{"../vnode/is-vhook.js":62,"is-object":24}],48:[function(require,module,exports){
 var document = require("global/document")
 
 var applyProperties = require("./apply-properties")
@@ -18942,7 +19069,7 @@ function createElement(vnode, opts) {
     return node
 }
 
-},{"../vnode/handle-thunk.js":59,"../vnode/is-vnode.js":62,"../vnode/is-vtext.js":63,"../vnode/is-widget.js":64,"./apply-properties":46,"global/document":21}],48:[function(require,module,exports){
+},{"../vnode/handle-thunk.js":60,"../vnode/is-vnode.js":63,"../vnode/is-vtext.js":64,"../vnode/is-widget.js":65,"./apply-properties":47,"global/document":21}],49:[function(require,module,exports){
 // Maps a virtual DOM tree onto a real DOM tree in an efficient manner.
 // We don't want to read all of the DOM nodes in the tree so we use
 // the in-order tree indexing to eliminate recursion down certain branches.
@@ -19029,7 +19156,7 @@ function ascending(a, b) {
     return a > b ? 1 : -1
 }
 
-},{}],49:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 var applyProperties = require("./apply-properties")
 
 var isWidget = require("../vnode/is-widget.js")
@@ -19182,7 +19309,7 @@ function replaceRoot(oldRoot, newRoot) {
     return newRoot;
 }
 
-},{"../vnode/is-widget.js":64,"../vnode/vpatch.js":67,"./apply-properties":46,"./update-widget":51}],50:[function(require,module,exports){
+},{"../vnode/is-widget.js":65,"../vnode/vpatch.js":68,"./apply-properties":47,"./update-widget":52}],51:[function(require,module,exports){
 var document = require("global/document")
 var isArray = require("x-is-array")
 
@@ -19264,7 +19391,7 @@ function patchIndices(patches) {
     return indices
 }
 
-},{"./create-element":47,"./dom-index":48,"./patch-op":49,"global/document":21,"x-is-array":71}],51:[function(require,module,exports){
+},{"./create-element":48,"./dom-index":49,"./patch-op":50,"global/document":21,"x-is-array":72}],52:[function(require,module,exports){
 var isWidget = require("../vnode/is-widget.js")
 
 module.exports = updateWidget
@@ -19281,7 +19408,7 @@ function updateWidget(a, b) {
     return false
 }
 
-},{"../vnode/is-widget.js":64}],52:[function(require,module,exports){
+},{"../vnode/is-widget.js":65}],53:[function(require,module,exports){
 'use strict';
 
 module.exports = AttributeHook;
@@ -19318,7 +19445,7 @@ AttributeHook.prototype.unhook = function (node, prop, next) {
 
 AttributeHook.prototype.type = 'AttributeHook';
 
-},{}],53:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 'use strict';
 
 var EvStore = require('ev-store');
@@ -19347,7 +19474,7 @@ EvHook.prototype.unhook = function(node, propertyName) {
     es[propName] = undefined;
 };
 
-},{"ev-store":11}],54:[function(require,module,exports){
+},{"ev-store":11}],55:[function(require,module,exports){
 'use strict';
 
 module.exports = SoftSetHook;
@@ -19366,7 +19493,7 @@ SoftSetHook.prototype.hook = function (node, propertyName) {
     }
 };
 
-},{}],55:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 'use strict';
 
 var isArray = require('x-is-array');
@@ -19505,7 +19632,7 @@ function errorString(obj) {
     }
 }
 
-},{"../vnode/is-thunk":60,"../vnode/is-vhook":61,"../vnode/is-vnode":62,"../vnode/is-vtext":63,"../vnode/is-widget":64,"../vnode/vnode.js":66,"../vnode/vtext.js":68,"./hooks/ev-hook.js":53,"./hooks/soft-set-hook.js":54,"./parse-tag.js":56,"x-is-array":71}],56:[function(require,module,exports){
+},{"../vnode/is-thunk":61,"../vnode/is-vhook":62,"../vnode/is-vnode":63,"../vnode/is-vtext":64,"../vnode/is-widget":65,"../vnode/vnode.js":67,"../vnode/vtext.js":69,"./hooks/ev-hook.js":54,"./hooks/soft-set-hook.js":55,"./parse-tag.js":57,"x-is-array":72}],57:[function(require,module,exports){
 'use strict';
 
 var split = require('browser-split');
@@ -19561,7 +19688,7 @@ function parseTag(tag, props) {
     return props.namespace ? tagName : tagName.toUpperCase();
 }
 
-},{"browser-split":7}],57:[function(require,module,exports){
+},{"browser-split":7}],58:[function(require,module,exports){
 'use strict';
 
 var DEFAULT_NAMESPACE = null;
@@ -19876,7 +20003,7 @@ function SVGAttributeNamespace(value) {
   }
 }
 
-},{}],58:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 'use strict';
 
 var isArray = require('x-is-array');
@@ -19940,7 +20067,7 @@ function isChildren(x) {
     return typeof x === 'string' || isArray(x);
 }
 
-},{"./hooks/attribute-hook":52,"./index.js":55,"./svg-attribute-namespace":57,"x-is-array":71}],59:[function(require,module,exports){
+},{"./hooks/attribute-hook":53,"./index.js":56,"./svg-attribute-namespace":58,"x-is-array":72}],60:[function(require,module,exports){
 var isVNode = require("./is-vnode")
 var isVText = require("./is-vtext")
 var isWidget = require("./is-widget")
@@ -19982,14 +20109,14 @@ function renderThunk(thunk, previous) {
     return renderedThunk
 }
 
-},{"./is-thunk":60,"./is-vnode":62,"./is-vtext":63,"./is-widget":64}],60:[function(require,module,exports){
+},{"./is-thunk":61,"./is-vnode":63,"./is-vtext":64,"./is-widget":65}],61:[function(require,module,exports){
 module.exports = isThunk
 
 function isThunk(t) {
     return t && t.type === "Thunk"
 }
 
-},{}],61:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 module.exports = isHook
 
 function isHook(hook) {
@@ -19998,7 +20125,7 @@ function isHook(hook) {
        typeof hook.unhook === "function" && !hook.hasOwnProperty("unhook"))
 }
 
-},{}],62:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualNode
@@ -20007,7 +20134,7 @@ function isVirtualNode(x) {
     return x && x.type === "VirtualNode" && x.version === version
 }
 
-},{"./version":65}],63:[function(require,module,exports){
+},{"./version":66}],64:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualText
@@ -20016,17 +20143,17 @@ function isVirtualText(x) {
     return x && x.type === "VirtualText" && x.version === version
 }
 
-},{"./version":65}],64:[function(require,module,exports){
+},{"./version":66}],65:[function(require,module,exports){
 module.exports = isWidget
 
 function isWidget(w) {
     return w && w.type === "Widget"
 }
 
-},{}],65:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 module.exports = "2"
 
-},{}],66:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 var version = require("./version")
 var isVNode = require("./is-vnode")
 var isWidget = require("./is-widget")
@@ -20100,7 +20227,7 @@ function VirtualNode(tagName, properties, children, key, namespace) {
 VirtualNode.prototype.version = version
 VirtualNode.prototype.type = "VirtualNode"
 
-},{"./is-thunk":60,"./is-vhook":61,"./is-vnode":62,"./is-widget":64,"./version":65}],67:[function(require,module,exports){
+},{"./is-thunk":61,"./is-vhook":62,"./is-vnode":63,"./is-widget":65,"./version":66}],68:[function(require,module,exports){
 var version = require("./version")
 
 VirtualPatch.NONE = 0
@@ -20124,7 +20251,7 @@ function VirtualPatch(type, vNode, patch) {
 VirtualPatch.prototype.version = version
 VirtualPatch.prototype.type = "VirtualPatch"
 
-},{"./version":65}],68:[function(require,module,exports){
+},{"./version":66}],69:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = VirtualText
@@ -20136,7 +20263,7 @@ function VirtualText(text) {
 VirtualText.prototype.version = version
 VirtualText.prototype.type = "VirtualText"
 
-},{"./version":65}],69:[function(require,module,exports){
+},{"./version":66}],70:[function(require,module,exports){
 var isObject = require("is-object")
 var isHook = require("../vnode/is-vhook")
 
@@ -20196,7 +20323,7 @@ function getPrototype(value) {
   }
 }
 
-},{"../vnode/is-vhook":61,"is-object":24}],70:[function(require,module,exports){
+},{"../vnode/is-vhook":62,"is-object":24}],71:[function(require,module,exports){
 var isArray = require("x-is-array")
 
 var VPatch = require("../vnode/vpatch")
@@ -20625,7 +20752,7 @@ function appendPatch(apply, patch) {
     }
 }
 
-},{"../vnode/handle-thunk":59,"../vnode/is-thunk":60,"../vnode/is-vnode":62,"../vnode/is-vtext":63,"../vnode/is-widget":64,"../vnode/vpatch":67,"./diff-props":69,"x-is-array":71}],71:[function(require,module,exports){
+},{"../vnode/handle-thunk":60,"../vnode/is-thunk":61,"../vnode/is-vnode":63,"../vnode/is-vtext":64,"../vnode/is-widget":65,"../vnode/vpatch":68,"./diff-props":70,"x-is-array":72}],72:[function(require,module,exports){
 var nativeIsArray = Array.isArray
 var toString = Object.prototype.toString
 
@@ -20635,7 +20762,7 @@ function isArray(obj) {
     return toString.call(obj) === "[object Array]"
 }
 
-},{}],72:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 var L = require('leaflet'),
     PathFinder = require('geojson-path-finder'),
     util = require('./util'),
@@ -20752,7 +20879,7 @@ module.exports = L.Class.extend({
     }
 });
 
-},{"./util":73,"geojson-path-finder":19,"leaflet":26,"leaflet-routing-machine":25,"turf-explode":34,"turf-featurecollection":36,"turf-nearest":39}],73:[function(require,module,exports){
+},{"./util":74,"geojson-path-finder":19,"leaflet":27,"leaflet-routing-machine":25,"turf-explode":35,"turf-featurecollection":37,"turf-nearest":40}],74:[function(require,module,exports){
 var L = require('leaflet');
 
 module.exports = {
@@ -20772,4 +20899,4 @@ module.exports = {
     }
 };
 
-},{"leaflet":26}]},{},[1]);
+},{"leaflet":27}]},{},[1]);
