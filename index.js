@@ -50,7 +50,8 @@ function initialize(network) {
         control = L.Routing.control({
             createMarker: function(i, wp) {
                 return L.marker(wp.latLng, {
-                    icon: L.icon.glyph({ prefix: '', glyph: String.fromCharCode(65 + i) })
+                    icon: L.icon.glyph({ prefix: '', glyph: String.fromCharCode(65 + i) }),
+                    draggable: true
                 })
             },
             router: router,
