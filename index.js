@@ -7,6 +7,7 @@ var L = require('leaflet'),
 
 L.Icon.Default.imagePath = 'images/';
 
+require('leaflet.icon.glyph');
 require('leaflet-routing-machine');
 
 var map = L.map('map');
@@ -47,6 +48,11 @@ function initialize(network) {
 
     var router = new Router(network),
         control = L.Routing.control({
+            createMarker: function(i, wp) {
+                return L.marker(wp.latLng, {
+                    icon: L.icon.glyph({ prefix: '', glyph: String.fromCharCode(65 + i) })
+                })
+            },
             router: router,
             routeWhileDragging: true,
             routeDragInterval: 100

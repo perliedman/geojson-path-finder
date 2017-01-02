@@ -9,6 +9,7 @@
     "geojson-path-finder": "^1.4.0",
     "leaflet": "^1.0.2",
     "leaflet-routing-machine": "^3.2.4",
+    "leaflet.icon.glyph": "^0.2.0",
     "turf-explode": "^1.0.1",
     "turf-extent": "^1.0.4",
     "turf-nearest": "^1.0.2"
