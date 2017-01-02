@@ -82,17 +82,17 @@ function initialize(network) {
         li.innerHTML = info[0] + ': <strong>' + Math.round(info[1]) + (info[2] ? '&nbsp;' + info[2] : '') + '</strong>';
     });
 
-    var networkLayer = L.layerGroup().addTo(map),
-        vertices = router._pathFinder._topo.vertices,
-        renderer = L.canvas().addTo(map);
-    nodeNames.forEach(function(nodeName) {
-        var node = graph[nodeName];
-        Object.keys(node).forEach(function(neighbor) {
-            var c1 = vertices[nodeName],
-                c2 = vertices[neighbor];
-            L.polyline([[c1[1], c1[0]], [c2[1], c2[0]]], { weight: 1, opacity: 0.4, renderer: renderer, interactive: false })
-                .addTo(networkLayer)
-                .bringToBack();
-        });
-    });
+    // var networkLayer = L.layerGroup().addTo(map),
+    //     vertices = router._pathFinder._topo.vertices,
+    //     renderer = L.canvas().addTo(map);
+    // nodeNames.forEach(function(nodeName) {
+    //     var node = graph[nodeName];
+    //     Object.keys(node).forEach(function(neighbor) {
+    //         var c1 = vertices[nodeName],
+    //             c2 = vertices[neighbor];
+    //         L.polyline([[c1[1], c1[0]], [c2[1], c2[0]]], { weight: 1, opacity: 0.4, renderer: renderer, interactive: false })
+    //             .addTo(networkLayer)
+    //             .bringToBack();
+    //     });
+    // });
 }
