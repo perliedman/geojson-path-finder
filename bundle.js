@@ -44,7 +44,7 @@ function initialize(network) {
     var bounds = L.latLngBounds([bbox[1], bbox[0]], [bbox[3], bbox[2]]);
     map.fitBounds(bounds);
 
-    L.rectangle(bounds, {color: 'orange', weight: 1, fillOpacity: 0.03}).addTo(map);
+    L.rectangle(bounds, {color: 'orange', weight: 1, fillOpacity: 0.03, interactive: false}).addTo(map);
 
     var router = new Router(network),
         control = L.Routing.control({
@@ -54,8 +54,8 @@ function initialize(network) {
         }).addTo(map);
 
     control.setWaypoints([
-        [57.744, 12.03],
-        [57.67, 11.89],
+        [57.740, 11.99],
+        [57.68, 11.90],
     ]);
 
     var totalDistance = network.features.reduce(function(total, feature) {
@@ -82,6 +82,20 @@ function initialize(network) {
         var li = L.DomUtil.create('li', '', infoContainer);
         li.innerHTML = info[0] + ': <strong>' + Math.round(info[1]) + (info[2] ? '&nbsp;' + info[2] : '') + '</strong>';
     });
+
+    // var networkLayer = L.layerGroup().addTo(map),
+    //     vertices = router._pathFinder._topo.vertices,
+    //     renderer = L.canvas().addTo(map);
+    // nodeNames.forEach(function(nodeName) {
+    //     var node = graph[nodeName];
+    //     Object.keys(node).forEach(function(neighbor) {
+    //         var c1 = vertices[nodeName],
+    //             c2 = vertices[neighbor];
+    //         L.polyline([[c1[1], c1[0]], [c2[1], c2[0]]], { weight: 1, opacity: 0.4, renderer: renderer, interactive: false })
+    //             .addTo(networkLayer)
+    //             .bringToBack();
+    //     });
+    // });
 }
 
 },{"./router":72,"./util":73,"@turf/line-distance":5,"gauge-progress":14,"leaflet":26,"leaflet-routing-machine":25,"turf-extent":35}],2:[function(require,module,exports){
@@ -1085,18 +1099,36 @@ module.exports = {
 
 function findNextEnd(v, prev, vertices, ends, vertexCoords) {
     var weight = 0,
-        coordinates = [];
+        reverseWeight = 0,
+        coordinates = [],
+        path = [];
 
     while (!ends[v]) {
-        var edges = vertices[v],
-            next = Object.keys(edges).filter(function(k) { return k !== prev; })[0];
+        var edges = vertices[v];
+
+        if (!edges) { break; }
+
+        var next = Object.keys(edges).filter(function(k) { return k !== prev; })[0];
         weight += edges[next];
+        reverseWeight += vertices[next][v];
+
+        if (path.indexOf(v) >= 0) {
+            ends[v] = vertices[v];
+            break;
+        }
+
         coordinates.push(vertexCoords[v]);
+        path.push(v);
         prev = v;
         v = next;
     }
 
-    return { vertex: v, weight: weight, coordinates: coordinates };
+    return {
+        vertex: v,
+        weight: weight,
+        reverseWeight: reverseWeight,
+        coordinates: coordinates 
+    };
 }
 
 function compactNode(k, vertices, ends, vertexCoords) {
@@ -1104,18 +1136,40 @@ function compactNode(k, vertices, ends, vertexCoords) {
     return Object.keys(neighbors).reduce(function(result, j) {
         var neighbor = findNextEnd(j, k, vertices, ends, vertexCoords);
         var weight = neighbors[j] + neighbor.weight;
-        if (neighbor.vertex !== k && (!result.edges[neighbor.vertex] || result.edges[neighbor.vertex] > weight)) {
-            result.edges[neighbor.vertex] = weight;
-            result.coordinates[neighbor.vertex] = [vertexCoords[k]].concat(neighbor.coordinates);
+        var reverseWeight = neighbors[j] + neighbor.reverseWeight;
+        if (neighbor.vertex !== k) {
+            if (!result.edges[neighbor.vertex] || result.edges[neighbor.vertex] > weight) {
+                result.edges[neighbor.vertex] = weight;
+                result.coordinates[neighbor.vertex] = [vertexCoords[k]].concat(neighbor.coordinates);
+            }
+            if (!isNaN(reverseWeight) && (!result.incomingEdges[neighbor.vertex] || result.incomingEdges[neighbor.vertex] > reverseWeight)) {
+                result.incomingEdges[neighbor.vertex] = reverseWeight;
+                var coordinates = [vertexCoords[k]].concat(neighbor.coordinates);
+                coordinates.reverse();
+                result.incomingCoordinates[neighbor.vertex] = coordinates;
+            }
         }
         return result;
-    }, {edges: {}, coordinates: {}});
+    }, {edges: {}, incomingEdges: {}, coordinates: {}, incomingCoordinates: {}});
 }
 
 function compactGraph(vertices, vertexCoords) {
     var ends = Object.keys(vertices).reduce(function(es, k) {
         var vertex = vertices[k];
-        if (Object.keys(vertex).length !== 2) {
+        var edges = Object.keys(vertex);
+        var numberEdges = edges.length;
+
+        if (numberEdges === 1) {
+            var other = vertices[edges[0]];
+            remove = !other[k];
+        } else if (numberEdges === 2) {
+            remove = edges.filter(function(n) {
+                return vertices[n][k];
+            }).length === numberEdges;
+        } else {
+            remove = false;
+        }
+        if (!remove) {
             es[k] = vertex;
         }
         return es;
@@ -1187,16 +1241,31 @@ function PathFinder(geojson, options) {
             b = edge[1],
             props = edge[2],
             w = weightFn(topo.vertices[a], topo.vertices[b], props),
+            makeEdgeList = function(node) {
+                if (!g[node]) {
+                    g[node] = {};
+                }
+            },
             concatEdge = function(startNode, endNode, weight) {
                 var v = g[startNode];
-                if (!v) {
-                    v = g[startNode] = {};
-                }
                 v[endNode] = weight;
             };
 
-        concatEdge(a, b, w);
-        concatEdge(b, a, w);
+        if (w) {
+            makeEdgeList(a);
+            makeEdgeList(b);
+            if (w instanceof Object) {
+                if (w.forward) {
+                    concatEdge(a, b, w.forward);
+                }
+                if (w.backward) {
+                    concatEdge(b, a, w.backward);
+                }
+            } else {
+                concatEdge(a, b, w);
+                concatEdge(b, a, w);
+            }
+        }
 
         return g;
     }, {});
@@ -1252,13 +1321,9 @@ PathFinder.prototype = {
         this._compact.graph[n] = phantom.edges;
         this._compact.coordinates[n] = phantom.coordinates;
 
-        // Add reverse edges from targets to phantom node
-        Object.keys(phantom.edges).forEach(function(neighbor) {
-            this._compact.graph[neighbor][n] = phantom.edges[neighbor];
-            var coords = phantom.coordinates[neighbor].slice(1);
-            coords.push(this._topo.vertices[neighbor])
-            coords.reverse();
-            this._compact.coordinates[neighbor][n] = coords;
+        Object.keys(phantom.incomingEdges).forEach(function(neighbor) {
+            this._compact.graph[neighbor][n] = phantom.incomingEdges[neighbor];
+            this._compact.coordinates[neighbor][n] = phantom.incomingCoordinates[neighbor];
         }.bind(this));
 
         return n;
@@ -20575,14 +20640,72 @@ var L = require('leaflet'),
     PathFinder = require('geojson-path-finder'),
     util = require('./util'),
     explode = require('turf-explode'),
-    nearest = require('turf-nearest');
+    nearest = require('turf-nearest'),
+    featurecollection = require('turf-featurecollection');
 
 require('leaflet-routing-machine');
 
+var highwaySpeeds = {
+    motorway: 110,
+    trunk: 90,
+    primary: 80,
+    secondary: 70,
+    tertiary: 50,
+    unclassified: 50,
+    road: 50,
+    residential: 30,
+    service: 30,
+    living_street: 20
+}
+
+var unknowns = {};
+
+function weightFn(a, b, props) {
+    var d = distance(point(a), point(b)) * 1000,
+        type = props.highway,
+        forwardSpeed,
+        backwardSpeed;
+
+    if (props.maxspeed) {
+        forwardSpeed = backwardSpeed = Number(props.maxspeed);
+    } else {
+        var linkIndex = type.indexOf('_link');
+        if (linkIndex >= 0) {
+            type = type.substring(0, linkIndex);
+        }
+
+        forwardSpeed = backwardSpeed = highwaySpeeds[type];
+        if (!forwardSpeed) {
+            unknowns[type] = true;
+        }
+    }
+
+    if (props.oneway && props.oneway !== 'no') {
+        backwardSpeed = null;
+    }
+
+    return {
+        forward: forwardSpeed && (d / (forwardSpeed / 3.6)),
+        backward: backwardSpeed && (d / (backwardSpeed / 3.6)),
+    };
+}
+
 module.exports = L.Class.extend({
     initialize: function(geojson) {
-        this._pathFinder = new PathFinder(geojson, { precision: 1e-9 });
-        this._points = explode(geojson);
+        this._pathFinder = new PathFinder(geojson, {
+            precision: 1e-9,
+            weightFn: weightFn
+        });
+        var vertices = this._pathFinder._vertices;
+        this._points = featurecollection(Object.keys(vertices)
+            .filter(function(nodeName) {
+                return Object.keys(vertices[nodeName]).length;
+            })
+            .map(function(nodeName) {
+                var vertice = this._pathFinder._topo.vertices[nodeName];
+                return point(vertice);
+            }.bind(this)));
+        console.log(JSON.stringify(unknowns, null, 2));
     },
 
     route: function(waypoints, cb, context) {
@@ -20604,7 +20727,16 @@ module.exports = L.Class.extend({
             });
         }
 
-        var totalDistance = legs.reduce(function(sum, l) { return sum + l.weight; }, 0) * 1000;
+        var totalTime = legs.reduce(function(sum, l) { return sum + l.weight; }, 0);
+        var totalDistance = legs.reduce(function(sum, l) { 
+            var legDistance = l.path.reduce(function(d, c, i, cs) {
+                if (i > 0) {
+                    return d + distance(point(cs[i - 1]), point(c)) * 1000;
+                }
+                return d;
+            }, 0);
+            return sum + legDistance;
+        }, 0);
 
         cb.call(context, null, [{
             name: '',
@@ -20612,7 +20744,7 @@ module.exports = L.Class.extend({
             inputWaypoints: waypoints,
             summary: {
                 totalDistance: totalDistance,
-                totalTime: totalDistance / (15 / 3.6)
+                totalTime: totalTime
             },
             coordinates: Array.prototype.concat.apply([], legs.map(function(l) { return l.path.map(util.toLatLng); })),
             instructions: []
@@ -20620,7 +20752,7 @@ module.exports = L.Class.extend({
     }
 });
 
-},{"./util":73,"geojson-path-finder":19,"leaflet":26,"leaflet-routing-machine":25,"turf-explode":34,"turf-nearest":39}],73:[function(require,module,exports){
+},{"./util":73,"geojson-path-finder":19,"leaflet":26,"leaflet-routing-machine":25,"turf-explode":34,"turf-featurecollection":36,"turf-nearest":39}],73:[function(require,module,exports){
 var L = require('leaflet');
 
 module.exports = {
