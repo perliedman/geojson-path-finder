@@ -24,6 +24,7 @@ var unknowns = {};
 
 function weightFn(a, b, props) {
     var d = distance(point(a), point(b)) * 1000,
+        factor = 0.9,
         type = props.highway,
         forwardSpeed,
         backwardSpeed;
@@ -34,15 +35,16 @@ function weightFn(a, b, props) {
         var linkIndex = type.indexOf('_link');
         if (linkIndex >= 0) {
             type = type.substring(0, linkIndex);
+            factor *= 0.7;
         }
 
-        forwardSpeed = backwardSpeed = highwaySpeeds[type];
+        forwardSpeed = backwardSpeed = highwaySpeeds[type] * factor;
         if (!forwardSpeed) {
             unknowns[type] = true;
         }
     }
 
-    if (props.oneway && props.oneway !== 'no') {
+    if (props.oneway && props.oneway !== 'no' || props.junction && props.junction === 'roundabout') {
         backwardSpeed = null;
     }
 
