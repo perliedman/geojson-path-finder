@@ -91,7 +91,7 @@ function initialize(network) {
     });
 
     var networkLayer = L.layerGroup(),
-        vertices = router._pathFinder._topo.vertices,
+        vertices = router._pathFinder._sourceVertices,
         renderer = L.canvas().addTo(map);
     nodeNames.forEach(function(nodeName) {
         var node = graph[nodeName];
@@ -1108,7 +1108,7 @@ module.exports = {
     compactGraph: compactGraph
 };
 
-function findNextEnd(v, prev, vertices, ends, vertexCoords) {
+function findNextEnd(v, prev, vertices, ends, vertexCoords, trackIncoming) {
     var weight = 0,
         reverseWeight = 0,
         coordinates = [],
@@ -1119,17 +1119,20 @@ function findNextEnd(v, prev, vertices, ends, vertexCoords) {
 
         if (!edges) { break; }
 
-        var next = Object.keys(edges).filter(function(k) { return k !== prev; })[0];
+        var next = Object.keys(edges).filter(function notPrevious(k) { return k !== prev; })[0];
         weight += edges[next];
-        reverseWeight += vertices[next][v];
 
-        if (path.indexOf(v) >= 0) {
-            ends[v] = vertices[v];
-            break;
+        if (trackIncoming) {
+            reverseWeight += vertices[next][v];
+
+            if (path.indexOf(v) >= 0) {
+                ends[v] = vertices[v];
+                break;
+            }
+            path.push(v);
         }
 
         coordinates.push(vertexCoords[v]);
-        path.push(v);
         prev = v;
         v = next;
     }
@@ -1142,10 +1145,10 @@ function findNextEnd(v, prev, vertices, ends, vertexCoords) {
     };
 }
 
-function compactNode(k, vertices, ends, vertexCoords) {
+function compactNode(k, vertices, ends, vertexCoords, trackIncoming) {
     var neighbors = vertices[k];
-    return Object.keys(neighbors).reduce(function(result, j) {
-        var neighbor = findNextEnd(j, k, vertices, ends, vertexCoords);
+    return Object.keys(neighbors).reduce(function compactEdge(result, j) {
+        var neighbor = findNextEnd(j, k, vertices, ends, vertexCoords, trackIncoming);
         var weight = neighbors[j] + neighbor.weight;
         var reverseWeight = neighbors[j] + neighbor.reverseWeight;
         if (neighbor.vertex !== k) {
@@ -1153,7 +1156,8 @@ function compactNode(k, vertices, ends, vertexCoords) {
                 result.edges[neighbor.vertex] = weight;
                 result.coordinates[neighbor.vertex] = [vertexCoords[k]].concat(neighbor.coordinates);
             }
-            if (!isNaN(reverseWeight) && (!result.incomingEdges[neighbor.vertex] || result.incomingEdges[neighbor.vertex] > reverseWeight)) {
+            if (trackIncoming && 
+                !isNaN(reverseWeight) && (!result.incomingEdges[neighbor.vertex] || result.incomingEdges[neighbor.vertex] > reverseWeight)) {
                 result.incomingEdges[neighbor.vertex] = reverseWeight;
                 var coordinates = [vertexCoords[k]].concat(neighbor.coordinates);
                 coordinates.reverse();
@@ -1165,7 +1169,7 @@ function compactNode(k, vertices, ends, vertexCoords) {
 }
 
 function compactGraph(vertices, vertexCoords) {
-    var ends = Object.keys(vertices).reduce(function(es, k) {
+    var ends = Object.keys(vertices).reduce(function findEnds(es, k) {
         var vertex = vertices[k];
         var edges = Object.keys(vertex);
         var numberEdges = edges.length;
@@ -1186,8 +1190,8 @@ function compactGraph(vertices, vertexCoords) {
         return es;
     }, {});
 
-    return Object.keys(ends).reduce(function(result, k) {
-        var compacted = compactNode(k, vertices, ends, vertexCoords);
+    return Object.keys(ends).reduce(function compactEnd(result, k) {
+        var compacted = compactNode(k, vertices, ends, vertexCoords, false);
         result.graph[k] = compacted.edges;
         result.coordinates[k] = compacted.coordinates;
         return result;
@@ -1237,27 +1241,28 @@ module.exports = PathFinder;
 function PathFinder(geojson, options) {
     options = options || {};
     
-    var topo = this._topo = topology(geojson, options),
-        weightFn = options.weightFn || function(a, b) {
+    var topo = topology(geojson, options),
+        weightFn = options.weightFn || function defaultWeightFn(a, b) {
             return distance(point(a), point(b));
         };
+    this._sourceVertices = topo.vertices;
 
     this._keyFn = options.keyFn || function(c) {
         return c.join(',');
     };
     this._precision = options.precision || 1e-5;
 
-    this._vertices = topo.edges.reduce(function(g, edge) {
+    this._vertices = topo.edges.reduce(function buildGraph(g, edge) {
         var a = edge[0],
             b = edge[1],
             props = edge[2],
             w = weightFn(topo.vertices[a], topo.vertices[b], props),
-            makeEdgeList = function(node) {
+            makeEdgeList = function makeEdgeList(node) {
                 if (!g[node]) {
                     g[node] = {};
                 }
             },
-            concatEdge = function(startNode, endNode, weight) {
+            concatEdge = function concatEdge(startNode, endNode, weight) {
                 var v = g[startNode];
                 v[endNode] = weight;
             };
@@ -1281,7 +1286,7 @@ function PathFinder(geojson, options) {
         return g;
     }, {});
 
-    this._compact = compactor.compactGraph(this._vertices, this._topo.vertices);
+    this._compact = compactor.compactGraph(this._vertices, this._sourceVertices);
 
     if (Object.keys(this._compact.graph).length === 0) {
         throw new Error('Compacted graph contains no forks (topology has no intersections).');
@@ -1302,13 +1307,13 @@ PathFinder.prototype = {
             var weight = path[0];
             path = path[1];
             return {
-                path: path.reduce(function(cs, v, i, vs) {
+                path: path.reduce(function buildPath(cs, v, i, vs) {
                     if (i > 0) {
                         cs = cs.concat(this._compact.coordinates[vs[i - 1]][v]);
                     }
 
                     return cs;
-                }.bind(this), []).concat([this._topo.vertices[finish]]),
+                }.bind(this), []).concat([this._sourceVertices[finish]]),
                 weight: weight
             };
         } else {
@@ -1320,7 +1325,7 @@ PathFinder.prototype = {
     },
 
     _roundCoord: function(c) {
-        return c.map(function(c) {
+        return c.map(function roundToPrecision(c) {
             return Math.round(c / this._precision) * this._precision;
         }.bind(this));
     },
@@ -1328,7 +1333,7 @@ PathFinder.prototype = {
     _createPhantom: function(n) {
         if (this._compact.graph[n]) return null;
 
-        var phantom = compactor.compactNode(n, this._vertices, this._compact.graph, this._topo.vertices);
+        var phantom = compactor.compactNode(n, this._vertices, this._compact.graph, this._sourceVertices, true);
         this._compact.graph[n] = phantom.edges;
         this._compact.coordinates[n] = phantom.coordinates;
 
@@ -1362,7 +1367,7 @@ module.exports = topology;
 
 function geoJsonReduce(geojson, fn, seed) {
     if (geojson.type === 'FeatureCollection') {
-        return geojson.features.reduce(function(a, f) {
+        return geojson.features.reduce(function reduceFeatures(a, f) {
             return geoJsonReduce(f, fn, a);
         }, seed);
     } else {
@@ -1388,24 +1393,24 @@ function isLineString(f) {
 
 function topology(geojson, options) {
     options = options || {};
-    var keyFn = options.keyFn || function(c) {
+    var keyFn = options.keyFn || function defaultKeyFn(c) {
             return c.join(',');
         },
         precision = options.precision || 1e-5,
-        roundCoord = function(c) {
-            return c.map(function(c) {
+        roundCoord = function roundCoord(c) {
+            return c.map(function roundToPrecision(c) {
                 return Math.round(c / precision) * precision;
             });
         };
 
     var lineStrings = geoJsonFilterFeatures(geojson, isLineString);
-    var vertices = explode(lineStrings).features.reduce(function(cs, f) {
+    var vertices = explode(lineStrings).features.reduce(function buildTopologyVertices(cs, f) {
             var rc = roundCoord(f.geometry.coordinates);
             cs[keyFn(rc)] = f.geometry.coordinates;
             return cs;
         }, {}),
-        edges = geoJsonReduce(lineStrings, function(es, f) {
-            f.geometry.coordinates.forEach(function(c, i, cs) {
+        edges = geoJsonReduce(lineStrings, function buildTopologyEdges(es, f) {
+            f.geometry.coordinates.forEach(function buildLineStringEdges(c, i, cs) {
                 if (i > 0) {
                     var k1 = keyFn(roundCoord(cs[i - 1])),
                         k2 = keyFn(roundCoord(c));
@@ -20832,7 +20837,7 @@ module.exports = L.Class.extend({
                 return Object.keys(vertices[nodeName]).length;
             })
             .map(function(nodeName) {
-                var vertice = this._pathFinder._topo.vertices[nodeName];
+                var vertice = this._pathFinder._sourceVertices[nodeName];
                 return point(vertice);
             }.bind(this)));
         console.log(JSON.stringify(unknowns, null, 2));
