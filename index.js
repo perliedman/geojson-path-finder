@@ -10,7 +10,7 @@ function PathFinder(geojson, options) {
     options = options || {};
     
     var topo = this._topo = topology(geojson, options),
-        weightFn = options.weightFn || function(a, b) {
+        weightFn = options.weightFn || function defaultWeightFn(a, b) {
             return distance(point(a), point(b));
         };
 
@@ -19,17 +19,17 @@ function PathFinder(geojson, options) {
     };
     this._precision = options.precision || 1e-5;
 
-    this._vertices = topo.edges.reduce(function(g, edge) {
+    this._vertices = topo.edges.reduce(function buildGraph(g, edge) {
         var a = edge[0],
             b = edge[1],
             props = edge[2],
             w = weightFn(topo.vertices[a], topo.vertices[b], props),
-            makeEdgeList = function(node) {
+            makeEdgeList = function makeEdgeList(node) {
                 if (!g[node]) {
                     g[node] = {};
                 }
             },
-            concatEdge = function(startNode, endNode, weight) {
+            concatEdge = function concatEdge(startNode, endNode, weight) {
                 var v = g[startNode];
                 v[endNode] = weight;
             };
@@ -74,7 +74,7 @@ PathFinder.prototype = {
             var weight = path[0];
             path = path[1];
             return {
-                path: path.reduce(function(cs, v, i, vs) {
+                path: path.reduce(function buildPath(cs, v, i, vs) {
                     if (i > 0) {
                         cs = cs.concat(this._compact.coordinates[vs[i - 1]][v]);
                     }
@@ -92,7 +92,7 @@ PathFinder.prototype = {
     },
 
     _roundCoord: function(c) {
-        return c.map(function(c) {
+        return c.map(function roundToPrecision(c) {
             return Math.round(c / this._precision) * this._precision;
         }.bind(this));
     },

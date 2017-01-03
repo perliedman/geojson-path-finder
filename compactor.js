@@ -14,7 +14,7 @@ function findNextEnd(v, prev, vertices, ends, vertexCoords) {
 
         if (!edges) { break; }
 
-        var next = Object.keys(edges).filter(function(k) { return k !== prev; })[0];
+        var next = Object.keys(edges).filter(function notPrevious(k) { return k !== prev; })[0];
         weight += edges[next];
         reverseWeight += vertices[next][v];
 
@@ -39,7 +39,7 @@ function findNextEnd(v, prev, vertices, ends, vertexCoords) {
 
 function compactNode(k, vertices, ends, vertexCoords) {
     var neighbors = vertices[k];
-    return Object.keys(neighbors).reduce(function(result, j) {
+    return Object.keys(neighbors).reduce(function compactEdge(result, j) {
         var neighbor = findNextEnd(j, k, vertices, ends, vertexCoords);
         var weight = neighbors[j] + neighbor.weight;
         var reverseWeight = neighbors[j] + neighbor.reverseWeight;
@@ -60,7 +60,7 @@ function compactNode(k, vertices, ends, vertexCoords) {
 }
 
 function compactGraph(vertices, vertexCoords) {
-    var ends = Object.keys(vertices).reduce(function(es, k) {
+    var ends = Object.keys(vertices).reduce(function findEnds(es, k) {
         var vertex = vertices[k];
         var edges = Object.keys(vertex);
         var numberEdges = edges.length;
@@ -81,7 +81,7 @@ function compactGraph(vertices, vertexCoords) {
         return es;
     }, {});
 
-    return Object.keys(ends).reduce(function(result, k) {
+    return Object.keys(ends).reduce(function compactEnd(result, k) {
         var compacted = compactNode(k, vertices, ends, vertexCoords);
         result.graph[k] = compacted.edges;
         result.coordinates[k] = compacted.coordinates;
