@@ -90,7 +90,7 @@ function initialize(network) {
     });
 
     var networkLayer = L.layerGroup(),
-        vertices = router._pathFinder._topo.vertices,
+        vertices = router._pathFinder._sourceVertices,
         renderer = L.canvas().addTo(map);
     nodeNames.forEach(function(nodeName) {
         var node = graph[nodeName];

@@ -66,7 +66,7 @@ module.exports = L.Class.extend({
                 return Object.keys(vertices[nodeName]).length;
             })
             .map(function(nodeName) {
-                var vertice = this._pathFinder._topo.vertices[nodeName];
+                var vertice = this._pathFinder._sourceVertices[nodeName];
                 return point(vertice);
             }.bind(this)));
         console.log(JSON.stringify(unknowns, null, 2));
