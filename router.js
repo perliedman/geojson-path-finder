@@ -8,48 +8,20 @@ var L = require('leaflet'),
 require('leaflet-routing-machine');
 
 var highwaySpeeds = {
-    motorway: 110,
-    trunk: 90,
-    primary: 80,
-    secondary: 70,
-    tertiary: 50,
-    unclassified: 50,
-    road: 50,
-    residential: 30,
-    service: 30,
-    living_street: 20
+    0: 110,
+    1: 90,
+    2: 80,
+    3: 70,
+    4: 50,
+    5: 40
 }
 
 var unknowns = {};
 
 function weightFn(a, b, props) {
     var d = distance(point(a), point(b)) * 1000,
-        type = props.highway,
-        forwardSpeed,
-        backwardSpeed;
-
-    if (props.maxspeed) {
-        forwardSpeed = backwardSpeed = Number(props.maxspeed);
-    } else {
-        var linkIndex = type.indexOf('_link');
-        if (linkIndex >= 0) {
-            type = type.substring(0, linkIndex);
-        }
-
-        forwardSpeed = backwardSpeed = highwaySpeeds[type];
-        if (!forwardSpeed) {
-            unknowns[type] = true;
-        }
-    }
-
-    if (props.oneway && props.oneway !== 'no') {
-        backwardSpeed = null;
-    }
-
-    return {
-        forward: forwardSpeed && (d / (forwardSpeed / 3.6)),
-        backward: backwardSpeed && (d / (backwardSpeed / 3.6)),
-    };
+        type = Math.floor((props.KKOD % 100) / 100)
+    return d / (highwaySpeeds[type] / 3.6);
 }
 
 module.exports = L.Class.extend({
