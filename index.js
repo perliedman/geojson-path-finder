@@ -9,10 +9,11 @@ module.exports = PathFinder;
 function PathFinder(geojson, options) {
     options = options || {};
     
-    var topo = this._topo = topology(geojson, options),
+    var topo = topology(geojson, options),
         weightFn = options.weightFn || function defaultWeightFn(a, b) {
             return distance(point(a), point(b));
         };
+    this._sourceVertices = topo.vertices;
 
     this._keyFn = options.keyFn || function(c) {
         return c.join(',');
@@ -53,7 +54,7 @@ function PathFinder(geojson, options) {
         return g;
     }, {});
 
-    this._compact = compactor.compactGraph(this._vertices, this._topo.vertices);
+    this._compact = compactor.compactGraph(this._vertices, this._sourceVertices);
 
     if (Object.keys(this._compact.graph).length === 0) {
         throw new Error('Compacted graph contains no forks (topology has no intersections).');
@@ -80,7 +81,7 @@ PathFinder.prototype = {
                     }
 
                     return cs;
-                }.bind(this), []).concat([this._topo.vertices[finish]]),
+                }.bind(this), []).concat([this._sourceVertices[finish]]),
                 weight: weight
             };
         } else {
@@ -100,7 +101,7 @@ PathFinder.prototype = {
     _createPhantom: function(n) {
         if (this._compact.graph[n]) return null;
 
-        var phantom = compactor.compactNode(n, this._vertices, this._compact.graph, this._topo.vertices);
+        var phantom = compactor.compactNode(n, this._vertices, this._compact.graph, this._sourceVertices, true);
         this._compact.graph[n] = phantom.edges;
         this._compact.coordinates[n] = phantom.coordinates;
 

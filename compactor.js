@@ -3,7 +3,7 @@ module.exports = {
     compactGraph: compactGraph
 };
 
-function findNextEnd(v, prev, vertices, ends, vertexCoords) {
+function findNextEnd(v, prev, vertices, ends, vertexCoords, trackIncoming) {
     var weight = 0,
         reverseWeight = 0,
         coordinates = [],
@@ -16,15 +16,18 @@ function findNextEnd(v, prev, vertices, ends, vertexCoords) {
 
         var next = Object.keys(edges).filter(function notPrevious(k) { return k !== prev; })[0];
         weight += edges[next];
-        reverseWeight += vertices[next][v];
 
-        if (path.indexOf(v) >= 0) {
-            ends[v] = vertices[v];
-            break;
+        if (trackIncoming) {
+            reverseWeight += vertices[next][v];
+
+            if (path.indexOf(v) >= 0) {
+                ends[v] = vertices[v];
+                break;
+            }
+            path.push(v);
         }
 
         coordinates.push(vertexCoords[v]);
-        path.push(v);
         prev = v;
         v = next;
     }
@@ -37,10 +40,10 @@ function findNextEnd(v, prev, vertices, ends, vertexCoords) {
     };
 }
 
-function compactNode(k, vertices, ends, vertexCoords) {
+function compactNode(k, vertices, ends, vertexCoords, trackIncoming) {
     var neighbors = vertices[k];
     return Object.keys(neighbors).reduce(function compactEdge(result, j) {
-        var neighbor = findNextEnd(j, k, vertices, ends, vertexCoords);
+        var neighbor = findNextEnd(j, k, vertices, ends, vertexCoords, trackIncoming);
         var weight = neighbors[j] + neighbor.weight;
         var reverseWeight = neighbors[j] + neighbor.reverseWeight;
         if (neighbor.vertex !== k) {
@@ -48,7 +51,8 @@ function compactNode(k, vertices, ends, vertexCoords) {
                 result.edges[neighbor.vertex] = weight;
                 result.coordinates[neighbor.vertex] = [vertexCoords[k]].concat(neighbor.coordinates);
             }
-            if (!isNaN(reverseWeight) && (!result.incomingEdges[neighbor.vertex] || result.incomingEdges[neighbor.vertex] > reverseWeight)) {
+            if (trackIncoming && 
+                !isNaN(reverseWeight) && (!result.incomingEdges[neighbor.vertex] || result.incomingEdges[neighbor.vertex] > reverseWeight)) {
                 result.incomingEdges[neighbor.vertex] = reverseWeight;
                 var coordinates = [vertexCoords[k]].concat(neighbor.coordinates);
                 coordinates.reverse();
@@ -82,7 +86,7 @@ function compactGraph(vertices, vertexCoords) {
     }, {});
 
     return Object.keys(ends).reduce(function compactEnd(result, k) {
-        var compacted = compactNode(k, vertices, ends, vertexCoords);
+        var compacted = compactNode(k, vertices, ends, vertexCoords, false);
         result.graph[k] = compacted.edges;
         result.coordinates[k] = compacted.coordinates;
         return result;
