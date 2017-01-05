@@ -145,3 +145,17 @@ test('can make oneway network', function(t) {
 
     t.end();
 });
+
+test('can recreate PathFinder from serialized data', function(t) {
+    var pathfinder = new PathFinder(geojson);
+
+    pathfinder = new PathFinder(pathfinder.serialize());
+    var path = pathfinder.findPath(point([8.44460166,59.48947469]), point([8.44651,59.513920000000006]));
+
+    t.ok(path, 'has path');
+    t.ok(path.path, 'path has vertices');
+    t.ok(path.weight, 'path has a weight');
+    t.equal(path.path.length, 220, 'path has expected length');
+    t.equal(path.weight, 6.377083181844789, 'path has expected weight');
+    t.end();
+});

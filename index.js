@@ -2,23 +2,34 @@ var findPath = require('./dijkstra'),
     topology = require('./topology'),
     compactor = require('./compactor')
     point = require('turf-point'),
-    distance = require('turf-distance');
+    distance = require('turf-distance'),
+    roundCoord = require('./round-coord');
 
 module.exports = PathFinder;
 
-function PathFinder(geojson, options) {
+function PathFinder(graph, options) {
     options = options || {};
-    
-    var topo = topology(geojson, options),
-        weightFn = options.weightFn || function defaultWeightFn(a, b) {
+    var weightFn = options.weightFn || function defaultWeightFn(a, b) {
             return distance(point(a), point(b));
         };
-    this._sourceVertices = topo.vertices;
-
     this._keyFn = options.keyFn || function(c) {
         return c.join(',');
     };
     this._precision = options.precision || 1e-5;
+    
+    if (graph.type === 'FeatureCollection') {
+        // Graph is GeoJSON data, create a topology from it
+        topo = topology(graph, options);
+        this._sourceVertices = topo.vertices;
+    } else if (graph.vertices) {
+        this._vertices = graph.vertices;
+        this._sourceVertices = graph.sourceVertices;
+        this._compact = {
+            graph: graph.compactedVertices,
+            coordinates: graph.compactedCoordinates
+        };
+        return;
+    }
 
     this._vertices = topo.edges.reduce(function buildGraph(g, edge) {
         var a = edge[0],
@@ -63,8 +74,8 @@ function PathFinder(geojson, options) {
 
 PathFinder.prototype = {
     findPath: function(a, b) {
-        var start = this._keyFn(this._roundCoord(a.geometry.coordinates)),
-            finish = this._keyFn(this._roundCoord(b.geometry.coordinates));
+        var start = this._keyFn(roundCoord(a.geometry.coordinates, this._precision)),
+            finish = this._keyFn(roundCoord(b.geometry.coordinates, this._precision));
 
         var phantomStart = this._createPhantom(start);
         var phantomEnd = this._createPhantom(finish);
@@ -92,10 +103,13 @@ PathFinder.prototype = {
         this._removePhantom(phantomEnd);
     },
 
-    _roundCoord: function(c) {
-        return c.map(function roundToPrecision(c) {
-            return Math.round(c / this._precision) * this._precision;
-        }.bind(this));
+    serialize: function() {
+        return {
+            vertices: this._vertices,
+            sourceVertices: this._sourceVertices,
+            compactedVertices: this._compact.graph,
+            compactedCoordinates: this._compact.coordinates
+        };
     },
 
     _createPhantom: function(n) {

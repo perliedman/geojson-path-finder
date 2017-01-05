@@ -1,4 +1,5 @@
-var explode = require('turf-explode');
+var explode = require('turf-explode'),
+    roundCoord = require('./round-coord');
 
 module.exports = topology;
 
@@ -33,24 +34,19 @@ function topology(geojson, options) {
     var keyFn = options.keyFn || function defaultKeyFn(c) {
             return c.join(',');
         },
-        precision = options.precision || 1e-5,
-        roundCoord = function roundCoord(c) {
-            return c.map(function roundToPrecision(c) {
-                return Math.round(c / precision) * precision;
-            });
-        };
+        precision = options.precision || 1e-5;
 
     var lineStrings = geoJsonFilterFeatures(geojson, isLineString);
     var vertices = explode(lineStrings).features.reduce(function buildTopologyVertices(cs, f) {
-            var rc = roundCoord(f.geometry.coordinates);
+            var rc = roundCoord(f.geometry.coordinates, precision);
             cs[keyFn(rc)] = f.geometry.coordinates;
             return cs;
         }, {}),
         edges = geoJsonReduce(lineStrings, function buildTopologyEdges(es, f) {
             f.geometry.coordinates.forEach(function buildLineStringEdges(c, i, cs) {
                 if (i > 0) {
-                    var k1 = keyFn(roundCoord(cs[i - 1])),
-                        k2 = keyFn(roundCoord(c));
+                    var k1 = keyFn(roundCoord(cs[i - 1], precision)),
+                        k2 = keyFn(roundCoord(c, precision));
                     es.push([k1, k2, f.properties]);
                 }
             });
