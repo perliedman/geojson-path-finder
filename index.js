@@ -1,71 +1,27 @@
 var findPath = require('./dijkstra'),
-    topology = require('./topology'),
-    compactor = require('./compactor')
-    point = require('turf-point'),
-    distance = require('turf-distance'),
+    preprocess = require('./preprocessor'),
+    compactor = require('./compactor'),
     roundCoord = require('./round-coord');
 
 module.exports = PathFinder;
 
-function PathFinder(graph, options) {
+function PathFinder(graph, options) {    
     options = options || {};
-    var weightFn = options.weightFn || function defaultWeightFn(a, b) {
-            return distance(point(a), point(b));
-        };
+
+    if (!graph.compactedVertices) {
+        graph = preprocess(graph, options);
+    }
+
     this._keyFn = options.keyFn || function(c) {
         return c.join(',');
     };
     this._precision = options.precision || 1e-5;
-    
-    if (graph.type === 'FeatureCollection') {
-        // Graph is GeoJSON data, create a topology from it
-        topo = topology(graph, options);
-        this._sourceVertices = topo.vertices;
-    } else if (graph.vertices) {
-        this._vertices = graph.vertices;
-        this._sourceVertices = graph.sourceVertices;
-        this._compact = {
-            graph: graph.compactedVertices,
-            coordinates: graph.compactedCoordinates
-        };
-        return;
-    }
-
-    this._vertices = topo.edges.reduce(function buildGraph(g, edge) {
-        var a = edge[0],
-            b = edge[1],
-            props = edge[2],
-            w = weightFn(topo.vertices[a], topo.vertices[b], props),
-            makeEdgeList = function makeEdgeList(node) {
-                if (!g[node]) {
-                    g[node] = {};
-                }
-            },
-            concatEdge = function concatEdge(startNode, endNode, weight) {
-                var v = g[startNode];
-                v[endNode] = weight;
-            };
-
-        if (w) {
-            makeEdgeList(a);
-            makeEdgeList(b);
-            if (w instanceof Object) {
-                if (w.forward) {
-                    concatEdge(a, b, w.forward);
-                }
-                if (w.backward) {
-                    concatEdge(b, a, w.backward);
-                }
-            } else {
-                concatEdge(a, b, w);
-                concatEdge(b, a, w);
-            }
-        }
-
-        return g;
-    }, {});
-
-    this._compact = compactor.compactGraph(this._vertices, this._sourceVertices);
+    this._vertices = graph.vertices;
+    this._sourceVertices = graph.sourceVertices;
+    this._compact = {
+        graph: graph.compactedVertices,
+        coordinates: graph.compactedCoordinates
+    };
 
     if (Object.keys(this._compact.graph).length === 0) {
         throw new Error('Compacted graph contains no forks (topology has no intersections).');
