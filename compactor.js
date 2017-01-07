@@ -63,8 +63,8 @@ function compactNode(k, vertices, ends, vertexCoords, trackIncoming) {
     }, {edges: {}, incomingEdges: {}, coordinates: {}, incomingCoordinates: {}});
 }
 
-function compactGraph(vertices, vertexCoords) {
-    var ends = Object.keys(vertices).reduce(function findEnds(es, k) {
+function compactGraph(vertices, vertexCoords, progress) {
+    var ends = Object.keys(vertices).reduce(function findEnds(es, k, i, vs) {
         var vertex = vertices[k];
         var edges = Object.keys(vertex);
         var numberEdges = edges.length;
@@ -82,13 +82,23 @@ function compactGraph(vertices, vertexCoords) {
         if (!remove) {
             es[k] = vertex;
         }
+
+        if (i % 1000 === 0 && progress) {
+            progress('compact:ends', i, vs.length);
+        }
+
         return es;
     }, {});
 
-    return Object.keys(ends).reduce(function compactEnd(result, k) {
+    return Object.keys(ends).reduce(function compactEnd(result, k, i, es) {
         var compacted = compactNode(k, vertices, ends, vertexCoords, false);
         result.graph[k] = compacted.edges;
         result.coordinates[k] = compacted.coordinates;
+
+        if (i % 1000 === 0 && progress) {
+            progress('compact:nodes', i, es.length);
+        }
+
         return result;
     }, {graph: {}, coordinates: {}});
 };

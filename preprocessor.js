@@ -18,7 +18,7 @@ module.exports = function preprocess(graph, options) {
         topo = graph;
     }
 
-    var vertices = topo.edges.reduce(function buildGraph(g, edge) {
+    var vertices = topo.edges.reduce(function buildGraph(g, edge, i, es) {
         var a = edge[0],
             b = edge[1],
             props = edge[2],
@@ -49,10 +49,14 @@ module.exports = function preprocess(graph, options) {
             }
         }
 
+        if (i % 1000 === 0 && options.progress) {
+            options.progress('edgeweights', i,es.length);
+        }
+
         return g;
     }, {});
 
-    var compact = compactor.compactGraph(vertices, topo.vertices);
+    var compact = compactor.compactGraph(vertices, topo.vertices, options.progress);
 
     return {
         vertices: vertices,
