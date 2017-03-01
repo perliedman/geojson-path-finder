@@ -15,8 +15,8 @@
   "license": "ISC",
   "dependencies": {
     "tinyqueue": "^1.1.0",
-    "turf-distance": "^1.1.0",
-    "turf-explode": "^1.0.1",
+    "turf-distance": "^3.0.12",
+    "turf-explode": "^3.0.12",
     "turf-point": "^2.0.1"
   },
   "devDependencies": {
