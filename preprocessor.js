@@ -1,6 +1,6 @@
 var topology = require('./topology'),
     compactor = require('./compactor'),
-    distance = require('turf-distance'),
+    distance = require('@turf/distance'),
     roundCoord = require('./round-coord'),
     point = require('turf-point');
 

@@ -2,7 +2,7 @@ var PathFinder = require('../'),
     geojson = require('./network.json'),
     test = require('tape'),
     point = require('turf-point'),
-    distance = require('turf-distance');
+    distance = require('@turf/distance');
 
 test('can create PathFinder', function(t) {
     var pathfinder = new PathFinder(geojson);
