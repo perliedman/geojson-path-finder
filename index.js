@@ -19,8 +19,9 @@ function PathFinder(graph, options) {
         return c.join(',');
     };
     this._precision = options.precision || 1e-5;
+    this._options = options;
 
-    if (Object.keys(this._graph.compactedVertices).length === 0) {
+    if (Object.keys(this._graph.compactedVertices).filter(function(k) { return k !== 'edgeData'; }).length === 0) {
         throw new Error('Compacted graph contains no forks (topology has no intersections).');
     }
 }
@@ -46,7 +47,18 @@ PathFinder.prototype = {
 
                     return cs;
                 }.bind(this), []).concat([this._graph.sourceVertices[finish]]),
-                weight: weight
+                weight: weight,
+                edgeDatas: this._graph.compactedEdges 
+                    ? path.reduce(function buildEdgeData(eds, v, i, vs) {
+                        if (i > 0) {
+                            eds.push({
+                                reducedEdge: this._graph.compactedEdges[vs[i - 1]][v]
+                            });
+                        }
+
+                        return eds;
+                    }.bind(this), [])
+                    : undefined
             };
         } else {
             return null;
@@ -63,13 +75,20 @@ PathFinder.prototype = {
     _createPhantom: function(n) {
         if (this._graph.compactedVertices[n]) return null;
 
-        var phantom = compactor.compactNode(n, this._graph.vertices, this._graph.compactedVertices, this._graph.sourceVertices, true);
+        var phantom = compactor.compactNode(n, this._graph.vertices, this._graph.compactedVertices, this._graph.sourceVertices, this._graph.edgeData, true, this._options);
         this._graph.compactedVertices[n] = phantom.edges;
         this._graph.compactedCoordinates[n] = phantom.coordinates;
+
+        if (this._graph.compactedEdges) {
+            this._graph.compactedEdges[n] = phantom.reducedEdges;
+        }
 
         Object.keys(phantom.incomingEdges).forEach(function(neighbor) {
             this._graph.compactedVertices[neighbor][n] = phantom.incomingEdges[neighbor];
             this._graph.compactedCoordinates[neighbor][n] = phantom.incomingCoordinates[neighbor];
+            if (this._graph.compactedEdges) {
+                this._graph.compactedEdges[neighbor][n] = phantom.reducedEdges[neighbor];
+            }
         }.bind(this));
 
         return n;
@@ -84,8 +103,17 @@ PathFinder.prototype = {
         Object.keys(this._graph.compactedCoordinates[n]).forEach(function(neighbor) {
             delete this._graph.compactedCoordinates[neighbor][n];
         }.bind(this));
+        if (this._graph.compactedEdges) {
+            Object.keys(this._graph.compactedEdges[n]).forEach(function(neighbor) {
+                delete this._graph.compactedEdges[neighbor][n];
+            }.bind(this));
+        }
 
         delete this._graph.compactedVertices[n];
         delete this._graph.compactedCoordinates[n];
+
+        if (this._graph.compactedEdges) {
+            delete this._graph.compactedEdges[n];
+        }
     }
 };
