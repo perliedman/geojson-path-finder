@@ -170,7 +170,7 @@ test('can reduce data on edges', function(t) {
 
     t.ok(path, 'has path');
     t.ok(path.edgeDatas, 'has edge datas');
-    console.log(path.edgeDatas)
+    t.ok(path.edgeDatas.every(function(e) { return e; }))
 
     t.end();
 });
