@@ -26,11 +26,17 @@ module.exports = function preprocess(graph, options) {
             makeEdgeList = function makeEdgeList(node) {
                 if (!g[node]) {
                     g[node] = {};
+                    if (options.edgeDataReduceFn) {
+                        g.edgeData[node] = {};
+                    }
                 }
             },
             concatEdge = function concatEdge(startNode, endNode, weight) {
                 var v = g[startNode];
                 v[endNode] = weight;
+                if (options.edgeDataReduceFn) {
+                    g.edgeData[endNode] = options.edgeDataReduceFn(options.edgeDataSeed, props);
+                }
             };
 
         if (w) {
@@ -54,14 +60,15 @@ module.exports = function preprocess(graph, options) {
         }
 
         return g;
-    }, {});
+    }, {edgeData: {}});
 
-    var compact = compactor.compactGraph(vertices, topo.vertices, options.progress);
+    var compact = compactor.compactGraph(vertices, topo.vertices, vertices.edgeData, options);
 
     return {
         vertices: vertices,
         sourceVertices: topo.vertices,
         compactedVertices: compact.graph,
-        compactedCoordinates: compact.coordinates
+        compactedCoordinates: compact.coordinates,
+        reducedEdges: options.edgeDataReduceFn ? compact.reducedEdges : null
     };
 };

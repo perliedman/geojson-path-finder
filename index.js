@@ -18,7 +18,7 @@ function PathFinder(graph, options) {
     };
     this._precision = options.precision || 1e-5;
 
-    if (Object.keys(this._graph.compactedVertices).length === 0) {
+    if (Object.keys(this._graph.compactedVertices).filter(function(k) { return k !== 'edgeData'; }).length === 0) {
         throw new Error('Compacted graph contains no forks (topology has no intersections).');
     }
 }
@@ -44,7 +44,16 @@ PathFinder.prototype = {
 
                     return cs;
                 }.bind(this), []).concat([this._graph.sourceVertices[finish]]),
-                weight: weight
+                weight: weight,
+                edgeDatas: this._graph.reducedEdges 
+                    ? path.reduce(function buildEdgeData(eds, v, i, vs) {
+                        if (i > 0) {
+                            cs.push({
+                                reducedEdge: this._graph.reducedEdges[vs[i - 1]][v]
+                            })
+                        }
+                    }.bind(this), [])
+                    : null
             };
         } else {
             return null;
@@ -61,7 +70,7 @@ PathFinder.prototype = {
     _createPhantom: function(n) {
         if (this._graph.compactedVertices[n]) return null;
 
-        var phantom = compactor.compactNode(n, this._graph.vertices, this._graph.compactedVertices, this._graph.sourceVertices, true);
+        var phantom = compactor.compactNode(n, this._graph.vertices, this._graph.compactedVertices, this._graph.sourceVertices, null, true);
         this._graph.compactedVertices[n] = phantom.edges;
         this._graph.compactedCoordinates[n] = phantom.coordinates;
 

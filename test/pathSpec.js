@@ -101,6 +101,7 @@ test('can\'t find path (advent of code)', function(t) {
             }
         });
         t.fail('Expected to throw exception for trivial topology');
+        t.end();
     } catch (e) {
         t.end();
     }
@@ -157,5 +158,18 @@ test('can recreate PathFinder from serialized data', function(t) {
     t.ok(path.weight, 'path has a weight');
     t.equal(path.path.length, 220, 'path has expected length');
     t.equal(path.weight, 6.377083181844789, 'path has expected weight');
+    t.end();
+});
+
+test('can reduce data on edges', function(t) {
+    var pathfinder = new PathFinder(geojson, {
+            edgeReduceFn: function(a, p) { return p.id; },
+            edgeDataSeed: -1
+        }),
+        path = pathfinder.findPath(point([8.44460166,59.48947469]), point([8.44651,59.513920000000006]));
+
+    t.ok(path, 'has path');
+    t.ok(path.edgeDatas, 'has edge datas');
+
     t.end();
 });
