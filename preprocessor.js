@@ -1,3 +1,5 @@
+'use strict';
+
 var topology = require('./topology'),
     compactor = require('./compactor'),
     distance = require('@turf/distance'),
@@ -8,7 +10,8 @@ module.exports = function preprocess(graph, options) {
     options = options || {};
     var weightFn = options.weightFn || function defaultWeightFn(a, b) {
             return distance(point(a), point(b));
-        };
+        },
+        topo;
 
     if (graph.type === 'FeatureCollection') {
         // Graph is GeoJSON data, create a topology from it

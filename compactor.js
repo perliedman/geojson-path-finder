@@ -1,3 +1,5 @@
+'use strict';
+
 module.exports = {
     compactNode: compactNode,
     compactGraph: compactGraph
@@ -80,7 +82,7 @@ function compactGraph(vertices, vertexCoords, progress) {
         } else {
             remove = false;
         }
-        
+
         if (!remove) {
             es[k] = vertex;
         }

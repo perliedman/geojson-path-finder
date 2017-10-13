@@ -1,3 +1,5 @@
+'use strict';
+
 var findPath = require('./dijkstra'),
     preprocess = require('./preprocessor'),
     compactor = require('./compactor'),

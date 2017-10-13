@@ -1,3 +1,5 @@
+'use strict';
+
 var explode = require('@turf/explode'),
     roundCoord = require('./round-coord');
 
