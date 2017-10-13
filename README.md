@@ -51,7 +51,7 @@ use to control the behaviour of the path finder. Available options:
 
 * `weightFn` controls how the weight (or cost) of travelling between two vertices is calculated;
   by default, the geographic distance between the coordinates is calculated and used as weight;
-  see [Weight functions][#weight-functions] below for details
+  see [Weight functions](#weight-functions) below for details
 * `precision` (default `1e-5`) controls the tolerance for how close vertices in the GeoJSON can be
   before considered being the same vertice; you can say that coordinates closer than this will be
   snapped together into one coordinate
