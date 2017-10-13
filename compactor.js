@@ -68,6 +68,7 @@ function compactGraph(vertices, vertexCoords, progress) {
         var vertex = vertices[k];
         var edges = Object.keys(vertex);
         var numberEdges = edges.length;
+        var remove;
 
         if (numberEdges === 1) {
             var other = vertices[edges[0]];
@@ -79,6 +80,7 @@ function compactGraph(vertices, vertexCoords, progress) {
         } else {
             remove = false;
         }
+        
         if (!remove) {
             es[k] = vertex;
         }
