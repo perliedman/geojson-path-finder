@@ -21,24 +21,24 @@ module.exports = function preprocess(graph, options) {
         topo = graph;
     }
 
-    var vertices = topo.edges.reduce(function buildGraph(g, edge, i, es) {
+    var graph = topo.edges.reduce(function buildGraph(g, edge, i, es) {
         var a = edge[0],
             b = edge[1],
             props = edge[2],
             w = weightFn(topo.vertices[a], topo.vertices[b], props),
             makeEdgeList = function makeEdgeList(node) {
-                if (!g[node]) {
-                    g[node] = {};
+                if (!g.vertices[node]) {
+                    g.vertices[node] = {};
                     if (options.edgeDataReduceFn) {
                         g.edgeData[node] = {};
                     }
                 }
             },
             concatEdge = function concatEdge(startNode, endNode, weight) {
-                var v = g[startNode];
+                var v = g.vertices[startNode];
                 v[endNode] = weight;
                 if (options.edgeDataReduceFn) {
-                    g.edgeData[endNode] = options.edgeDataReduceFn(options.edgeDataSeed, props);
+                    g.edgeData[startNode][endNode] = options.edgeDataReduceFn(options.edgeDataSeed, props);
                 }
             };
 
@@ -63,15 +63,16 @@ module.exports = function preprocess(graph, options) {
         }
 
         return g;
-    }, {edgeData: {}});
+    }, {edgeData: {}, vertices: {}});
 
-    var compact = compactor.compactGraph(vertices, topo.vertices, vertices.edgeData, options);
+    var compact = compactor.compactGraph(graph.vertices, topo.vertices, graph.edgeData, options);
 
     return {
-        vertices: vertices,
+        vertices: graph.vertices,
+        edgeData: graph.edgeData,
         sourceVertices: topo.vertices,
         compactedVertices: compact.graph,
         compactedCoordinates: compact.coordinates,
-        reducedEdges: options.edgeDataReduceFn ? compact.reducedEdges : null
+        compactedEdges: options.edgeDataReduceFn ? compact.reducedEdges : null
     };
 };

@@ -163,13 +163,14 @@ test('can recreate PathFinder from serialized data', function(t) {
 
 test('can reduce data on edges', function(t) {
     var pathfinder = new PathFinder(geojson, {
-            edgeReduceFn: function(a, p) { return p.id; },
+            edgeDataReduceFn: function(a, p) { return {id: p.id}; },
             edgeDataSeed: -1
         }),
         path = pathfinder.findPath(point([8.44460166,59.48947469]), point([8.44651,59.513920000000006]));
 
     t.ok(path, 'has path');
     t.ok(path.edgeDatas, 'has edge datas');
+    console.log(path.edgeDatas)
 
     t.end();
 });

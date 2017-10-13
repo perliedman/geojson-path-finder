@@ -108,10 +108,9 @@ function compactGraph(vertices, vertexCoords, edgeData, options) {
         var compacted = compactNode(k, vertices, ends, vertexCoords, edgeData, false, options);
         result.graph[k] = compacted.edges;
         result.coordinates[k] = compacted.coordinates;
-        result.reducedEdges[k] = compacted.reducedEdges;
 
         if (options.edgeDataReduceFn) {
-            // result.edgeData[k] = 
+            result.reducedEdges[k] = compacted.reducedEdges;
         }
 
         if (i % 1000 === 0 && progress) {
