@@ -15,7 +15,7 @@
   "license": "ISC",
   "dependencies": {
     "@turf/distance": "^5.0.0",
-    "@turf/explode": "^4.7.3",
+    "@turf/explode": "^5.0.4",
     "tinyqueue": "^1.2.2",
     "turf-point": "^2.0.1"
   },
