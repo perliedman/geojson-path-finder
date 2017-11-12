@@ -14,7 +14,7 @@
   "author": "Per Liedman <per@liedman.net>",
   "license": "ISC",
   "dependencies": {
-    "@turf/distance": "^5.0.0",
+    "@turf/distance": "^5.0.4",
     "@turf/explode": "^4.7.3",
     "tinyqueue": "^1.2.2",
     "turf-point": "^2.0.1"

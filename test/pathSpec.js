@@ -87,7 +87,7 @@ test('can find path (complex)', function(t) {
     t.ok(path.path, 'path has vertices');
     t.ok(path.weight, 'path has a weight');
     t.equal(path.path.length, 220, 'path has expected length');
-    t.equal(path.weight, 6.377083181844789, 'path has expected weight');
+    t.ok(Math.abs(path.weight - 6.3751) < 5e-5, 'path has expected weight');
     t.end();
 });
 
@@ -157,7 +157,7 @@ test('can recreate PathFinder from serialized data', function(t) {
     t.ok(path.path, 'path has vertices');
     t.ok(path.weight, 'path has a weight');
     t.equal(path.path.length, 220, 'path has expected length');
-    t.equal(path.weight, 6.377083181844789, 'path has expected weight');
+    t.ok(Math.abs(path.weight - 6.3751) < 5e-5, 'path has expected weight');
     t.end();
 });
 
