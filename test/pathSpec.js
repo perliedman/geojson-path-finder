@@ -174,3 +174,14 @@ test('can reduce data on edges', function(t) {
 
     t.end();
 });
+
+test('finding a path between nodes not in original graph', function(t) {
+    var pathfinder = new PathFinder(geojson, {
+            edgeDataReduceFn: function(a, p) { return {id: p.id}; },
+            edgeDataSeed: -1
+        }),
+        path = pathfinder.findPath(point([8.3,59.3]), point([8.5,59.6]));
+
+    t.false(path);
+    t.end();
+})
