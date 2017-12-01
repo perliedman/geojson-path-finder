@@ -1,6 +1,6 @@
 var topology = require('../topology'),
     geojson = require('./network.json'),
-    test = require('tape');
+    test = require('tap').test;
 
 test('can create topology', function(t) {
     var topo = topology(geojson);

@@ -9,18 +9,17 @@
     "test": "test"
   },
   "scripts": {
-    "test": "tape test/*.js | faucet"
+    "test": "tap test/*.js | tap-spec"
   },
   "author": "Per Liedman <per@liedman.net>",
   "license": "ISC",
   "dependencies": {
     "@turf/distance": "^5.0.4",
     "@turf/explode": "^4.7.3",
+    "tap": "^11.0.0",
+    "tap-spec": "^4.1.1",
     "tinyqueue": "^1.2.2",
     "turf-point": "^2.0.1"
   },
-  "devDependencies": {
-    "faucet": "0.0.1",
-    "tape": "^4.5.1"
-  }
+  "devDependencies": {}
 }
