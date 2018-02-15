@@ -176,11 +176,15 @@ test('can reduce data on edges', function(t) {
 });
 
 function edgeReduce(a, p) {
-  const p_arr = [p.id];
-  const a_arr = (a && a.id) ? [...a.id] : [];
-
-  const arr = Array.from(new Set([...p_arr, ...a_arr]));
-  return { id: [].concat(...arr) };
+    var a_arr = (a && a.id) ? a.id : [];
+    if(typeof p.id === 'number') {
+        a_arr.push(p.id);
+    } else {
+        p.id.forEach(function (id) {
+            a_arr.push(id);
+        });
+    }
+    return { id: Array.from(new Set(a_arr)) };
 }
 
 test('captures all edge data', function(t) {
@@ -191,9 +195,8 @@ test('captures all edge data', function(t) {
         path = pathfinder.findPath(point([8.44460166,59.48947469]), point([8.44651,59.513920000000006]));
 
     t.ok(path, 'has path');
-    console.log(JSON.stringify(path.edgeDatas));
     t.ok(path.edgeDatas, 'has edge datas');
-    t.ok(path.edgeDatas.some(function(e) { console.log(e); console.log(e.reducedEdge.id.indexOf(2001) >-1); return (e.reducedEdge.id.indexOf(2001) >-1); }));
+    t.ok(path.edgeDatas.some(function(e) { return (e.reducedEdge.id.indexOf(2001) >-1); }));
 
     t.end();
 });
