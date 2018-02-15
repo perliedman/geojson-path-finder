@@ -937,6 +937,26 @@
             ]
          }
       },
+      {
+         "type":"Feature",
+         "properties":{
+            "id":2001,
+            "lastUpdate":"2016-03-19"
+         },
+         "geometry":{
+            "type": "LineString",
+            "coordinates":[
+               [
+                  8.42652926,
+                  59.50263377
+               ],
+               [
+                  8.42620233,
+                  59.50276093
+               ]
+            ]
+         }
+      },
       {  
          "type":"Feature",
          "properties":{  
@@ -946,10 +966,6 @@
          "geometry":{  
             "type":"LineString",
             "coordinates":[  
-               [  
-                  8.42652926,
-                  59.50263377
-               ],
                [  
                   8.42620233,
                   59.50276093

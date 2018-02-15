@@ -12,7 +12,9 @@ function findNextEnd(prev, v, vertices, ends, vertexCoords, edgeData, trackIncom
         path = [],
         reducedEdge = options.edgeDataSeed;
         
-    reducedEdge = options.edgeDataReduceFn(reducedEdge, edgeData[v][prev]);
+    if (options.edgeDataReduceFn) {
+        reducedEdge = options.edgeDataReduceFn(reducedEdge, edgeData[v][prev]);
+    }
 
     while (!ends[v]) {
         var edges = vertices[v];

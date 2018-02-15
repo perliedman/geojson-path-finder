@@ -170,7 +170,30 @@ test('can reduce data on edges', function(t) {
 
     t.ok(path, 'has path');
     t.ok(path.edgeDatas, 'has edge datas');
-    t.ok(path.edgeDatas.every(function(e) { return e; }))
+    t.ok(path.edgeDatas.every(function(e) { return e; }));
+
+    t.end();
+});
+
+function edgeReduce(a, p) {
+  const p_arr = [p.id];
+  const a_arr = (a && a.id) ? [...a.id] : [];
+
+  const arr = Array.from(new Set([...p_arr, ...a_arr]));
+  return { id: [].concat(...arr) };
+}
+
+test('captures all edge data', function(t) {
+    var pathfinder = new PathFinder(geojson, {
+            edgeDataReduceFn: edgeReduce,
+            edgeDataSeed: -1
+        }),
+        path = pathfinder.findPath(point([8.44460166,59.48947469]), point([8.44651,59.513920000000006]));
+
+    t.ok(path, 'has path');
+    console.log(JSON.stringify(path.edgeDatas));
+    t.ok(path.edgeDatas, 'has edge datas');
+    t.ok(path.edgeDatas.some(function(e) { console.log(e); console.log(e.reducedEdge.id.indexOf(2001) >-1); return (e.reducedEdge.id.indexOf(2001) >-1); }));
 
     t.end();
 });
