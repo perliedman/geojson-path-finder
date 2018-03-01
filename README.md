@@ -3,7 +3,7 @@ GeoJSON Path Finder
 
 [![Greenkeeper badge](https://badges.greenkeeper.io/perliedman/geojson-path-finder.svg)](https://greenkeeper.io/)
 
-[![Build status](https://travis-ci.org/perliedman/geojson-path-finder.png)](https://travis-ci.org/perliedman/geojson-path-finder)
+[![Build status](https://travis-ci.org/perliedman/geojson-path-finder.svg?branch=master)](https://travis-ci.org/perliedman/geojson-path-finder)
 
 Find shortest path through a network of GeoJSON.
 
