@@ -3,7 +3,8 @@ var L = require('leaflet'),
     util = require('./util'),
     extent = require('turf-extent');
     gauge = require('gauge-progress')(),
-    lineDistance = require('@turf/line-distance');
+    lineDistance = require('@turf/line-distance'),
+    config = require('./config');
 
 L.Icon.Default.imagePath = 'images/';
 
@@ -12,8 +13,9 @@ require('leaflet-routing-machine');
 
 var map = L.map('map');
 
-L.tileLayer('https://api.mapbox.com/v4/mapbox.outdoors/{z}/{x}/{y}{r}.png?access_token=pk.eyJ1IjoibGllZG1hbiIsImEiOiJjaW5odGlpM2EwMDNodnNrbDdyMXloZHRyIn0.XqcMsnzar2XNODt99aSkEA', {
-        attribution: "© <a href='https://www.mapbox.com/about/maps/'>Mapbox</a> © <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> <strong><a href='https://www.mapbox.com/map-feedback/' target='_blank'>Improve this map</a></strong>"
+L.tileLayer('https://api.mapbox.com/v4/mapbox.outdoors/{z}/{x}/{y}{r}.png?access_token={token}', {
+        attribution: "© <a href='https://www.mapbox.com/about/maps/'>Mapbox</a> © <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> <strong><a href='https://www.mapbox.com/map-feedback/' target='_blank'>Improve this map</a></strong>",
+        token: config.apiToken
     })
     .addTo(map);
 
@@ -71,7 +73,7 @@ function initialize(network) {
                 return total;
             }
         }, 0),
-        graph = router._pathFinder._compact.graph,
+        graph = router._pathFinder._graph.compactedVertices,
         nodeNames = Object.keys(graph),
         totalNodes = nodeNames.length,
         totalEdges = nodeNames.reduce(function(total, nodeName) {
@@ -90,7 +92,7 @@ function initialize(network) {
     });
 
     var networkLayer = L.layerGroup(),
-        vertices = router._pathFinder._sourceVertices,
+        vertices = router._pathFinder._graph.sourceVertices,
         renderer = L.canvas().addTo(map);
     nodeNames.forEach(function(nodeName) {
         var node = graph[nodeName];

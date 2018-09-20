@@ -4,6 +4,9 @@
   "description": "Demo for geojson-path-finder",
   "main": "index.js",
   "dependencies": {
+    "@turf/distance": "^6.0.1",
+    "@turf/helpers": "^6.1.4",
+    "@turf/line-distance": "^4.7.3",
     "faucet": "^0.0.1",
     "gauge-progress": "^2.1.12",
     "geojson-path-finder": "^1.4.1",

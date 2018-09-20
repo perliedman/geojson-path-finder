@@ -3,6 +3,8 @@ var L = require('leaflet'),
     util = require('./util'),
     explode = require('turf-explode'),
     nearest = require('turf-nearest'),
+    distance = require('@turf/distance').default,
+    point = require('@turf/helpers').point,
     featurecollection = require('turf-featurecollection');
 
 require('leaflet-routing-machine');
@@ -60,16 +62,16 @@ module.exports = L.Class.extend({
             precision: 1e-9,
             weightFn: weightFn
         });
-        var vertices = this._pathFinder._vertices;
+        var vertices = this._pathFinder._graph.vertices;
         this._points = featurecollection(Object.keys(vertices)
             .filter(function(nodeName) {
                 return Object.keys(vertices[nodeName]).length;
             })
             .map(function(nodeName) {
-                var vertice = this._pathFinder._sourceVertices[nodeName];
+                var vertice = this._pathFinder._graph.sourceVertices[nodeName];
                 return point(vertice);
             }.bind(this)));
-        console.log(JSON.stringify(unknowns, null, 2));
+        // console.log(JSON.stringify(unknowns, null, 2));
     },
 
     route: function(waypoints, cb, context) {
