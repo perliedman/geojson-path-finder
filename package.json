@@ -16,7 +16,7 @@
   "dependencies": {
     "@turf/distance": "^6.0.1",
     "@turf/explode": "^5.1.0",
-    "tap": "^12.6.3",
+    "tap": "^13.1.3",
     "tap-spec": "^5.0.0",
     "tinyqueue": "^2.0.0",
     "turf-point": "^2.0.1"
