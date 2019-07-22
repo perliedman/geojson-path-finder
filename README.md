@@ -40,7 +40,7 @@ var path = pathfinder.findPath(start, finish);
 Where `start` and `finish` are two GeoJSON `point` features.
 
 If a route can be found, an object with two properties: `path` and `weight` is returned, where `path` 
-is the coordinates the path runs through, and `weight` is the total weight (distance) of the path.
+is the coordinates the path runs through, and `weight` is the total weight (distance, if you use the default weight function) of the path.
 
 ### `PathFinder` options
 
