@@ -1,8 +1,8 @@
-var topology = require('../topology'),
-    geojson = require('./network.json'),
-    test = require('tap').test;
+import topology from '../topology'
+import geojson from './network.json'
+import tap from 'tap';
 
-test('can create topology', function(t) {
+tap.test('can create topology', function(t) {
     var topo = topology(geojson);
     t.ok(topo);
     t.ok(topo.vertices);

@@ -1,6 +1,6 @@
 {
   "name": "geojson-path-finder",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "Find shortest path through a network of GeoJSON",
   "repository": "git@github.com:perliedman/geojson-path-finder.git",
   "homepage": "https://github.com/perliedman/geojson-path-finder",
@@ -15,11 +15,21 @@
   "license": "ISC",
   "dependencies": {
     "@turf/distance": "^6.0.1",
-    "@turf/explode": "^5.1.0",
-    "tap": "^14.2.2",
+    "@turf/explode": "^5.1.5",
+    "tap": "^14.6.1",
     "tap-spec": "^5.0.0",
-    "tinyqueue": "^2.0.0",
-    "turf-point": "^2.0.1"
+    "tinyqueue": "^2.0.3",
+    "@turf/helpers": "^6.1.4"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "eslint": "6.3.0",
+    "eslint-config-google": "0.13.0",
+    "eslint-config-standard": "14.1.0",
+    "eslint-plugin-import": "2.18.2",
+    "eslint-plugin-node": "9.2.0",
+    "eslint-plugin-prettier": "3.1.0",
+    "eslint-plugin-promise": "4.2.1",
+    "eslint-plugin-react": "7.14.3",
+    "eslint-plugin-standard": "4.0.1"
+  }
 }

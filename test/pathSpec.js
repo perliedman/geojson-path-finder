@@ -1,16 +1,16 @@
-var PathFinder = require('../'),
-    geojson = require('./network.json'),
-    test = require('tap').test,
-    point = require('turf-point'),
-    distance = require('@turf/distance').default;
+import PathFinder from '../'
+import geojson from './network.json'
+import tap from 'tap'
+import { point } from '@turf/helpers'
+import distance from '@turf/distance'
 
-test('can create PathFinder', function(t) {
+tap.test('can create PathFinder', function(t) {
     var pathfinder = new PathFinder(geojson);
     t.ok(pathfinder);
     t.end();
 });
 
-test('can find path (simple)', function(t) {
+tap.test('can find path (simple)', function(t) {
     var network = {
         type: 'FeatureCollection',
         features: [
@@ -41,7 +41,7 @@ test('can find path (simple)', function(t) {
     t.end();
 });
 
-test('can find path (medium)', function(t) {
+tap.test('can find path (medium)', function(t) {
     var network = {
         type: 'FeatureCollection',
         features: [
@@ -79,7 +79,7 @@ test('can find path (medium)', function(t) {
     t.end();
 });
 
-test('can find path (complex)', function(t) {
+tap.test('can find path (complex)', function(t) {
     var pathfinder = new PathFinder(geojson),
         path = pathfinder.findPath(point([8.44460166,59.48947469]), point([8.44651,59.513920000000006]));
 
@@ -91,7 +91,7 @@ test('can find path (complex)', function(t) {
     t.end();
 });
 
-test('can\'t find path (advent of code)', function(t) {
+tap.test('can\'t find path (advent of code)', function(t) {
     try {
         new PathFinder(require('./advent24.json'), {
             weightFn: function(a, b) {
@@ -107,7 +107,7 @@ test('can\'t find path (advent of code)', function(t) {
     }
 });
 
-test('can make oneway network', function(t) {
+tap.test('can make oneway network', function(t) {
     var network = {
         type: 'FeatureCollection',
         features: [
@@ -147,7 +147,7 @@ test('can make oneway network', function(t) {
     t.end();
 });
 
-test('can recreate PathFinder from serialized data', function(t) {
+tap.test('can recreate PathFinder from serialized data', function(t) {
     var pathfinder = new PathFinder(geojson);
 
     pathfinder = new PathFinder(pathfinder.serialize());
@@ -161,7 +161,7 @@ test('can recreate PathFinder from serialized data', function(t) {
     t.end();
 });
 
-test('can reduce data on edges', function(t) {
+tap.test('can reduce data on edges', function(t) {
     var pathfinder = new PathFinder(geojson, {
             edgeDataReduceFn: function(a, p) { return {id: p.id}; },
             edgeDataSeed: -1
@@ -187,7 +187,7 @@ function edgeReduce(a, p) {
     return { id: Array.from(new Set(a_arr)) };
 }
 
-test('captures all edge data', function(t) {
+tap.test('captures all edge data', function(t) {
     var pathfinder = new PathFinder(geojson, {
             edgeDataReduceFn: edgeReduce,
             edgeDataSeed: -1
@@ -201,7 +201,7 @@ test('captures all edge data', function(t) {
     t.end();
 });
 
-test('finding a path between nodes not in original graph', function(t) {
+tap.test('finding a path between nodes not in original graph', function(t) {
     var pathfinder = new PathFinder(geojson, {
             edgeDataReduceFn: function(a, p) { return {id: p.id}; },
             edgeDataSeed: -1

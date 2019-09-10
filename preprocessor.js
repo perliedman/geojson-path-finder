@@ -1,78 +1,75 @@
-'use strict';
+import { compactGraph } from './compactor'
+import distance from '@turf/distance'
+import { point } from '@turf/helpers'
+import topology from './topology'
 
-var topology = require('./topology'),
-    compactor = require('./compactor'),
-    distance = require('@turf/distance').default,
-    roundCoord = require('./round-coord'),
-    point = require('turf-point');
+export default function preprocess (graph, options) {
+  options = options || {}
+  var weightFn = options.weightFn || function defaultWeightFn (a, b) {
+    return distance(point(a), point(b))
+  }
+  var topo
 
-module.exports = function preprocess(graph, options) {
-    options = options || {};
-    var weightFn = options.weightFn || function defaultWeightFn(a, b) {
-            return distance(point(a), point(b));
-        },
-        topo;
+  if (graph.type === 'FeatureCollection') {
+    // Graph is GeoJSON data, create a topology from it
+    topo = topology(graph, options)
+  } else if (graph.edges) {
+    // Graph is a preprocessed topology
+    topo = graph
+  }
 
-    if (graph.type === 'FeatureCollection') {
-        // Graph is GeoJSON data, create a topology from it
-        topo = topology(graph, options);
-    } else if (graph.edges) {
-        // Graph is a preprocessed topology
-        topo = graph;
+  var graph2 = topo.edges.reduce(function buildGraph (g, edge, i, es) {
+    var a = edge[0]
+    var b = edge[1]
+    var props = edge[2]
+    var w = weightFn(topo.vertices[a], topo.vertices[b], props)
+    var makeEdgeList = function makeEdgeList (node) {
+      if (!g.vertices[node]) {
+        g.vertices[node] = {}
+        if (options.edgeDataReduceFn) {
+          g.edgeData[node] = {}
+        }
+      }
+    }
+    var concatEdge = function concatEdge (startNode, endNode, weight) {
+      var v = g.vertices[startNode]
+      v[endNode] = weight
+      if (options.edgeDataReduceFn) {
+        g.edgeData[startNode][endNode] = options.edgeDataReduceFn(options.edgeDataSeed, props)
+      }
     }
 
-    var graph = topo.edges.reduce(function buildGraph(g, edge, i, es) {
-        var a = edge[0],
-            b = edge[1],
-            props = edge[2],
-            w = weightFn(topo.vertices[a], topo.vertices[b], props),
-            makeEdgeList = function makeEdgeList(node) {
-                if (!g.vertices[node]) {
-                    g.vertices[node] = {};
-                    if (options.edgeDataReduceFn) {
-                        g.edgeData[node] = {};
-                    }
-                }
-            },
-            concatEdge = function concatEdge(startNode, endNode, weight) {
-                var v = g.vertices[startNode];
-                v[endNode] = weight;
-                if (options.edgeDataReduceFn) {
-                    g.edgeData[startNode][endNode] = options.edgeDataReduceFn(options.edgeDataSeed, props);
-                }
-            };
-
-        if (w) {
-            makeEdgeList(a);
-            makeEdgeList(b);
-            if (w instanceof Object) {
-                if (w.forward) {
-                    concatEdge(a, b, w.forward);
-                }
-                if (w.backward) {
-                    concatEdge(b, a, w.backward);
-                }
-            } else {
-                concatEdge(a, b, w);
-                concatEdge(b, a, w);
-            }
+    if (w) {
+      makeEdgeList(a)
+      makeEdgeList(b)
+      if (w instanceof Object) {
+        if (w.forward) {
+          concatEdge(a, b, w.forward)
         }
-
-        if (i % 1000 === 0 && options.progress) {
-            options.progress('edgeweights', i,es.length);
+        if (w.backward) {
+          concatEdge(b, a, w.backward)
         }
+      } else {
+        concatEdge(a, b, w)
+        concatEdge(b, a, w)
+      }
+    }
 
-        return g;
-    }, {edgeData: {}, vertices: {}});
+    if (i % 1000 === 0 && options.progress) {
+      options.progress('edgeweights', i, es.length)
+    }
 
-    var compact = compactor.compactGraph(graph.vertices, topo.vertices, graph.edgeData, options);
+    return g
+  }, { edgeData: {}, vertices: {} })
 
-    return {
-        vertices: graph.vertices,
-        edgeData: graph.edgeData,
-        sourceVertices: topo.vertices,
-        compactedVertices: compact.graph,
-        compactedCoordinates: compact.coordinates,
-        compactedEdges: options.edgeDataReduceFn ? compact.reducedEdges : null
-    };
-};
+  var compact = compactGraph(graph2.vertices, topo.vertices, graph2.edgeData, options)
+
+  return {
+    vertices: graph2.vertices,
+    edgeData: graph2.edgeData,
+    sourceVertices: topo.vertices,
+    compactedVertices: compact.graph,
+    compactedCoordinates: compact.coordinates,
+    compactedEdges: options.edgeDataReduceFn ? compact.reducedEdges : null
+  }
+}

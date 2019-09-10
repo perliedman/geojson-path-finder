@@ -21,8 +21,8 @@ npm install --save geojson-path-finder
 Create a path finding object:
 
 ```javascript
-var PathFinder = require('geojson-path-finder'),
-    geojson = require('./network.json');
+import PathFinder from 'geojson-path-finder'
+const geojson = require('./network.json');
 
 var pathFinder = new PathFinder(geojson);
 ```
