@@ -86,7 +86,7 @@ function compactGraph(vertices, vertexCoords, edgeData, options) {
         var numberEdges = edges.length;
         var remove;
 
-        if(options.compact === false) {
+        if (options.compact === false) {
             remove = false;
         } else if (numberEdges === 1) {
             var other = vertices[edges[0]];
