@@ -90,10 +90,8 @@ PathFinder.prototype = {
         }
 
         Object.keys(phantom.incomingEdges).forEach(function(neighbor) {
-            var neighborKeys = Object.keys(this._graph.compactedCoordinates[neighbor]);
-            var neighborExactPos = neighborKeys.length > 0 ? this._graph.compactedCoordinates[neighbor][neighborKeys[0]][0] : neighbor.split(',').map(function(v) { return parseFloat(v); });
             this._graph.compactedVertices[neighbor][n] = phantom.incomingEdges[neighbor];
-            this._graph.compactedCoordinates[neighbor][n] = [neighborExactPos].concat(phantom.incomingCoordinates[neighbor].slice(0, -1));
+            this._graph.compactedCoordinates[neighbor][n] = [this._graph.sourceVertices[neighbor]].concat(phantom.incomingCoordinates[neighbor].slice(0, -1));
             if (this._graph.compactedEdges) {
                 this._graph.compactedEdges[neighbor][n] = phantom.reducedEdges[neighbor];
             }
