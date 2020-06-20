@@ -3,7 +3,9 @@
 var findPath = require('./dijkstra'),
     preprocess = require('./preprocessor'),
     compactor = require('./compactor'),
-    roundCoord = require('./round-coord');
+    roundCoord = require('./round-coord'),
+    distance = require('@turf/distance').default,
+    point = require('turf-point');
 
 module.exports = PathFinder;
 
@@ -76,6 +78,23 @@ PathFinder.prototype = {
 
     serialize: function() {
         return this._graph;
+    },
+
+    findNearestJunction: function(p) {
+        var vertex = [ null, Number.MAX_VALUE ];
+        var junctions = Object.keys(this._graph.vertices).filter ( (function(k) {
+            var nEdges = Object.keys(this._graph.vertices[k]).length;
+            return nEdges >= 3 || nEdges == 1;
+        }).bind(this));
+
+        junctions.forEach( (function(k) {
+            const dist = distance(point(p), point(this._graph.sourceVertices[k]));
+            if(dist < vertex[1]) {
+                vertex[1] = dist;
+                vertex[0] = this._graph.sourceVertices[k].slice(0);
+            }
+        }).bind(this));
+        return vertex;
     },
 
     _createPhantom: function(n) {
