@@ -1,4 +1,4 @@
-var Queue = require('tinyqueue');
+var Queue = require('tinyqueue').default;
 
 module.exports = function(graph, start, end) {
     var costs = {};
