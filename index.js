@@ -1,6 +1,5 @@
 var L = require('leaflet'),
     Router = require('./router'),
-    util = require('./util'),
     extent = require('turf-extent');
     gauge = require('gauge-progress')(),
     lineDistance = require('@turf/line-distance'),
@@ -13,7 +12,7 @@ require('leaflet-routing-machine');
 
 var map = L.map('map');
 
-L.tileLayer('https://api.mapbox.com/v4/mapbox.outdoors/{z}/{x}/{y}{r}.png?access_token={token}', {
+L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}{r}?access_token={token}', {
         attribution: "© <a href='https://www.mapbox.com/about/maps/'>Mapbox</a> © <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> <strong><a href='https://www.mapbox.com/map-feedback/' target='_blank'>Improve this map</a></strong>",
         token: config.apiToken
     })
