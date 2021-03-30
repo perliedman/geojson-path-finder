@@ -1,6 +1,6 @@
 {
   "name": "geojson-path-finder",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "Find shortest path through a network of GeoJSON",
   "repository": "git@github.com:perliedman/geojson-path-finder.git",
   "homepage": "https://github.com/perliedman/geojson-path-finder",
