@@ -3,8 +3,7 @@
 var topology = require('./topology'),
     compactor = require('./compactor'),
     distance = require('@turf/distance').default,
-    roundCoord = require('./round-coord'),
-    point = require('turf-point');
+    {point} = require('@turf/helpers');
 
 module.exports = function preprocess(graph, options) {
     options = options || {};
