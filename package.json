@@ -21,5 +21,7 @@
     "tinyqueue": "^2.0.0",
     "turf-point": "^2.0.1"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@types/geojson": "^7946.0.8"
+  }
 }
