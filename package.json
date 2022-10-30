@@ -4,22 +4,30 @@
   "description": "Find shortest path through a network of GeoJSON",
   "repository": "git@github.com:perliedman/geojson-path-finder.git",
   "homepage": "https://github.com/perliedman/geojson-path-finder",
-  "main": "index.js",
+  "module": "dist/index.js",
   "directories": {
     "test": "test"
   },
   "scripts": {
-    "test": "tap test/*.js | tap-spec"
+    "build": "tsc",
+    "install": "npm run build",
+    "pretest": "npm run build",
+    "test": "tape -r esm test/*.js | tap-spec"
   },
   "author": "Per Liedman <per@liedman.net>",
   "license": "ISC",
   "dependencies": {
-    "@turf/distance": "^6.0.1",
-    "@turf/explode": "^5.1.0",
-    "tap": "^14.2.2",
-    "tap-spec": "^5.0.0",
-    "tinyqueue": "^2.0.0",
-    "turf-point": "^2.0.1"
+    "@turf/distance": "^6.5.0",
+    "@turf/explode": "^6.5.0",
+    "@turf/helpers": "^6.5.0",
+    "tinyqueue": "^2.0.3"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@tsconfig/node16": "^1.0.3",
+    "@types/node": "^18.11.7",
+    "esm": "^3.2.25",
+    "tap-spec": "^5.0.0",
+    "tape": "^5.6.1",
+    "typescript": "^4.8.4"
+  }
 }
