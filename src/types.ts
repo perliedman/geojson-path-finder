@@ -21,7 +21,7 @@ export type PathFinderGraph<TEdgeData> = {
 };
 
 export type PathFinderOptions<TEdgeReduce, TProperties> = {
-  precision?: number;
+  tolerance?: number;
   key?: (coordinates: Position) => string;
   compact?: boolean;
   /**

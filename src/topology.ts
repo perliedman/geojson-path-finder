@@ -15,7 +15,7 @@ export default function createTopology<TEdgeData, TProperties>(
   options: PathFinderOptions<TEdgeData, TProperties> = {}
 ): Topology<TProperties> {
   const { key = defaultKey } = options;
-  const precision = options.precision || 1e-5;
+  const { tolerance = 1e-5 } = options;
   const lineStrings = featureCollection(
     network.features.filter((f) => f.geometry.type === "LineString")
   );
@@ -26,7 +26,7 @@ export default function createTopology<TEdgeData, TProperties>(
     index,
     features
   ) {
-    var rc = roundCoord(feature.geometry.coordinates, precision);
+    var rc = roundCoord(feature.geometry.coordinates, tolerance);
     coordinates[key(rc)] = feature.geometry.coordinates;
 
     if (index % 1000 === 0 && options.progress) {
@@ -53,8 +53,8 @@ export default function createTopology<TEdgeData, TProperties>(
   ) {
     f.geometry.coordinates.forEach(function buildLineStringEdges(c, i, cs) {
       if (i > 0) {
-        var k1 = key(roundCoord(cs[i - 1], precision)),
-          k2 = key(roundCoord(c, precision));
+        var k1 = key(roundCoord(cs[i - 1], tolerance)),
+          k2 = key(roundCoord(c, tolerance));
         edges.push([k1, k2, f.properties]);
       }
     });

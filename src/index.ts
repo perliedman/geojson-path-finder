@@ -35,9 +35,9 @@ export default class PathFinder<TEdgeReduce, TProperties> {
   }
 
   findPath(a: Feature<Point>, b: Feature<Point>) {
-    const { key = defaultKey, precision = 1e-5 } = this.options;
-    const start = key(roundCoord(a.geometry.coordinates, precision));
-    const finish = key(roundCoord(b.geometry.coordinates, precision));
+    const { key = defaultKey, tolerance = 1e-5 } = this.options;
+    const start = key(roundCoord(a.geometry.coordinates, tolerance));
+    const finish = key(roundCoord(b.geometry.coordinates, tolerance));
 
     // We can't find a path if start or finish isn't in the
     // set of non-compacted vertices
