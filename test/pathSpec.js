@@ -1,4 +1,4 @@
-import PathFinder from "../dist/";
+import PathFinder from "../dist/esm";
 import geojson from "./network.json";
 import { point } from "@turf/helpers";
 import distance from "@turf/distance";

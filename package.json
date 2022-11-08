@@ -4,14 +4,17 @@
   "description": "Find shortest path through a network of GeoJSON",
   "repository": "git@github.com:perliedman/geojson-path-finder.git",
   "homepage": "https://github.com/perliedman/geojson-path-finder",
-  "module": "dist/index.js",
+  "module": "dist/esm/index.js",
+  "main": "dist/cjs/index.js",
   "directories": {
     "test": "test"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "npm run build:esm && npm run build:cjs",
+    "build:esm": "tsc -p tsconfig.json",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
     "install": "npm run build",
-    "pretest": "npm run build",
+    "pretest": "npm run build:esm",
     "test": "tape -r esm test/*.js | tap-spec"
   },
   "author": "Per Liedman <per@liedman.net>",

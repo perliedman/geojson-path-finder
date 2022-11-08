@@ -2,9 +2,9 @@
   "extends": "@tsconfig/node16/tsconfig.json",
   "compilerOptions": {
     "types": ["node"],
-    "module": "ES6",
+    "module": "CommonJS",
     "strict": true,
-    "outDir": "dist/esm",
+    "outDir": "dist/cjs",
     "sourceMap": true
   },
   "include": ["src/**/*"],

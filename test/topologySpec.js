@@ -1,4 +1,4 @@
-import topology from "../dist/topology.js";
+import topology from "../dist/esm/topology";
 import geojson from "./network.json";
 import { test } from "tape";
 
