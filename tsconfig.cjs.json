@@ -5,7 +5,8 @@
     "module": "CommonJS",
     "strict": true,
     "outDir": "dist/cjs",
-    "sourceMap": true
+    "sourceMap": true,
+    "declaration": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "**/*.spec.ts"]

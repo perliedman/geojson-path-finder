@@ -5,7 +5,8 @@
     "module": "ES6",
     "strict": true,
     "outDir": "dist/esm",
-    "sourceMap": true
+    "sourceMap": true,
+    "declaration": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "**/*.spec.ts"]
