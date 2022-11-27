@@ -16,6 +16,13 @@ See the [GeoJSON Path Finder demo](https://www.liedman.net/geojson-path-finder/)
 npm install --save geojson-path-finder
 ```
 
+### Web browser distribution
+```
+docker-compose run dist
+file ./dist/geojson-path-finder.min.js
+```
+
+
 ## API
 
 Create a path finding object:
