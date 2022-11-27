@@ -1,0 +1,14 @@
+version: "3.7"
+
+services:
+  dist:
+    image: node:17.9-bullseye
+    working_dir: /node
+    volumes:
+    - .:/node
+    command:
+    - /bin/bash
+    - -c
+    - |
+      npm install
+      npm run prepublish

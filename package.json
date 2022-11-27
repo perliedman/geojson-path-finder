@@ -9,19 +9,22 @@
     "test": "test"
   },
   "scripts": {
-    "test": "tap test/*.js | tap-spec"
+    "test": "tap test/*.js | tap-spec",
+    "prepublish": "NODE_ENV=production && mkdir -p dist && browserify --standalone PathFinder index.js | uglifyjs -c -m > dist/geojson-path-finder.min.js"
   },
   "author": "Per Liedman <per@liedman.net>",
   "license": "ISC",
   "dependencies": {
     "@turf/distance": "^6.0.1",
     "@turf/explode": "^5.1.0",
+    "browserify": "^17.0.0",
     "tap": "^14.2.2",
     "tap-spec": "^5.0.0",
     "tinyqueue": "^2.0.0",
     "turf-point": "^2.0.1"
   },
   "devDependencies": {
-    "@types/geojson": "^7946.0.8"
+    "@types/geojson": "^7946.0.8",
+    "browserify": ""
   }
 }
