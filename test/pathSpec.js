@@ -1,5 +1,6 @@
-import PathFinder from "../dist/esm";
+import PathFinder, { pathToGeoJSON } from "../dist/esm";
 import geojson from "./network.json";
+import geojson66 from "./66.json";
 import { point } from "@turf/helpers";
 import distance from "@turf/distance";
 import { test } from "tape";
@@ -126,6 +127,25 @@ test("can't find path (advent of code)", function (t) {
   }
 });
 
+test("does not remove vertices from result", (t) => {
+  var pathfinder = new PathFinder(geojson66, {
+      weight: (a, b) => {
+        const dx = a[0] - b[0];
+        const dy = a[1] - b[1];
+        return Math.sqrt(dx * dx + dy * dy);
+      },
+      tolerance: 1,
+    }),
+    path = pathfinder.findPath(point([0, 0]), point([15, 12]));
+
+  t.ok(path, "has path");
+  t.ok(path.path, "path has vertices");
+  t.ok(path.weight, "path has a weight");
+  t.equal(path.path.length, 7, "path has expected length");
+  t.ok(Math.abs(path.weight - 21.9574) < 5e-5, "path has expected weight");
+  t.end();
+});
+
 test("can make oneway network", function (t) {
   var network = {
     type: "FeatureCollection",
@@ -171,23 +191,6 @@ test("can make oneway network", function (t) {
 
   t.end();
 });
-
-// test("can recreate PathFinder from serialized data", function (t) {
-//   var pathfinder = new PathFinder(geojson);
-
-//   pathfinder = new PathFinder(pathfinder.serialize());
-//   var path = pathfinder.findPath(
-//     point([8.44460166, 59.48947469]),
-//     point([8.44651, 59.513920000000006])
-//   );
-
-//   t.ok(path, "has path");
-//   t.ok(path.path, "path has vertices");
-//   t.ok(path.weight, "path has a weight");
-//   t.equal(path.path.length, 220, "path has expected length");
-//   t.ok(Math.abs(path.weight - 6.3751) < 5e-5, "path has expected weight");
-//   t.end();
-// });
 
 test("can reduce data on edges", function (t) {
   var pathfinder = new PathFinder(geojson, {
