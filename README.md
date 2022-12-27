@@ -26,7 +26,7 @@ npm install --save geojson-path-finder
 
 ## API
 
-Detailed (and somewhat experimental) [API Docs](docs/)
+Detailed (and somewhat experimental) [API Docs](https://www.liedman.net/geojson-path-finder/docs/)
 
 Create a path finding object:
 
