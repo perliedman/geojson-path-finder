@@ -26,6 +26,8 @@ npm install --save geojson-path-finder
 
 ## API
 
+Detailed (and somewhat experimental) [API Docs](docs/)
+
 Create a path finding object:
 
 ```javascript
