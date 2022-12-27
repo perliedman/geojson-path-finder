@@ -1,18 +1,18 @@
-import PathFinder, { pathToGeoJSON } from "../dist/esm";
+import { expect, test } from "vitest";
+
+import PathFinder, { pathToGeoJSON } from "../src/index";
 import geojson from "./network.json";
 import geojson66 from "./66.json";
 import { point } from "@turf/helpers";
 import distance from "@turf/distance";
-import { test } from "tape";
 
-test("can create PathFinder", function (t) {
-  var pathfinder = new PathFinder(geojson);
-  t.ok(pathfinder);
-  t.end();
+test("can create PathFinder", () => {
+  const pathfinder = new PathFinder(geojson);
+  expect(pathfinder).toBeTruthy();
 });
 
-test("can find path (simple)", function (t) {
-  var network = {
+test("can find path (simple)", () => {
+  const network = {
     type: "FeatureCollection",
     features: [
       {
@@ -38,18 +38,17 @@ test("can find path (simple)", function (t) {
     ],
   };
 
-  var pathfinder = new PathFinder(network);
+  const pathfinder = new PathFinder(network);
   const path = pathfinder.findPath(point([0, 0]), point([1, 1]));
 
-  t.ok(path, "has path");
-  t.ok(path.path, "path has vertices");
-  t.equal(path.path.length, 3, "path has 3 vertices");
-  t.ok(path.weight, "path has a weight");
-  t.end();
+  expect(path).toBeTruthy();
+  expect(path.path).toBeTruthy();
+  expect(path.path.length).toBe(3);
+  expect(path.weight).toBeGreaterThan(0);
 });
 
-test("can find path (medium)", function (t) {
-  var network = {
+test("can find path (medium)", () => {
+  const network = {
     type: "FeatureCollection",
     features: [
       {
@@ -86,49 +85,43 @@ test("can find path (medium)", function (t) {
     ],
   };
 
-  var pathfinder = new PathFinder(network),
+  const pathfinder = new PathFinder(network),
     path = pathfinder.findPath(point([0, 0]), point([1, 1]));
 
-  t.ok(path, "has path");
-  t.ok(path.path, "path has vertices");
-  t.equal(path.path.length, 3, "path has 3 vertices");
-  t.ok(path.weight, "path has a weight");
-  t.end();
+  expect(path).toBeTruthy();
+  expect(path.path).toBeTruthy();
+  expect(path.path.length).toBe(3);
+  expect(path.weight).toBeGreaterThan(0);
 });
 
-test("can find path (complex)", function (t) {
-  var pathfinder = new PathFinder(geojson),
+test("can find path (complex)", () => {
+  const pathfinder = new PathFinder(geojson),
     path = pathfinder.findPath(
       point([8.44460166, 59.48947469]),
       point([8.44651, 59.513920000000006])
     );
 
-  t.ok(path, "has path");
-  t.ok(path.path, "path has vertices");
-  t.ok(path.weight, "path has a weight");
-  t.equal(path.path.length, 220, "path has expected length");
-  t.ok(Math.abs(path.weight - 6.3751) < 5e-5, "path has expected weight");
-  t.end();
+  expect(path).toBeTruthy();
+  expect(path.path).toBeTruthy();
+  expect(path.weight).toBeGreaterThan(0);
+  expect(path.path.length).toBe(220);
+  expect(path.weight).toBeCloseTo(6.3751);
 });
 
-test("can't find path (advent of code)", function (t) {
-  try {
-    new PathFinder(require("./advent24.json"), {
-      weight: function (a, b) {
-        var dx = a[0] - b[0];
-        var dy = a[1] - b[1];
-        return Math.sqrt(dx * dx + dy * dy);
-      },
-    });
-    t.fail("Expected to throw exception for trivial topology");
-    t.end();
-  } catch (e) {
-    t.end();
-  }
+test("can handle network without forks", () => {
+  const pathFinder = new PathFinder(require("./advent24.json"), {
+    weight: function (a, b) {
+      const dx = a[0] - b[0];
+      const dy = a[1] - b[1];
+      return Math.sqrt(dx * dx + dy * dy);
+    },
+  });
+  const path = pathFinder.findPath(point([1, 1]), point([9, 1]));
+  console.log(JSON.stringify(pathToGeoJSON(path)));
 });
 
 test("does not remove vertices from result", (t) => {
-  var pathfinder = new PathFinder(geojson66, {
+  const pathfinder = new PathFinder(geojson66, {
       weight: (a, b) => {
         const dx = a[0] - b[0];
         const dy = a[1] - b[1];
@@ -138,16 +131,15 @@ test("does not remove vertices from result", (t) => {
     }),
     path = pathfinder.findPath(point([0, 0]), point([15, 12]));
 
-  t.ok(path, "has path");
-  t.ok(path.path, "path has vertices");
-  t.ok(path.weight, "path has a weight");
-  t.equal(path.path.length, 7, "path has expected length");
-  t.ok(Math.abs(path.weight - 21.9574) < 5e-5, "path has expected weight");
-  t.end();
+  expect(path).toBeTruthy();
+  expect(path.path).toBeTruthy();
+  expect(path.weight).toBeGreaterThan(0);
+  expect(path.path.length).toBe(7);
+  expect(path.weight).toBeCloseTo(21.9574);
 });
 
-test("can make oneway network", function (t) {
-  var network = {
+test("can make oneway network", () => {
+  const network = {
     type: "FeatureCollection",
     features: [
       {
@@ -173,27 +165,25 @@ test("can make oneway network", function (t) {
     ],
   };
 
-  var pathfinder = new PathFinder(network, {
-      weight: function (a, b) {
-        return {
-          forward: distance(point(a), point(b)),
-        };
-      },
-    }),
-    path = pathfinder.findPath(point([0, 0]), point([1, 1]));
+  const pathfinder = new PathFinder(network, {
+    weight: function (a, b) {
+      return {
+        forward: distance(point(a), point(b)),
+      };
+    },
+  });
+  const path1 = pathfinder.findPath(point([0, 0]), point([1, 1]));
 
-  t.ok(path, "has path");
-  t.ok(path.path, "path has vertices");
-  t.ok(path.weight, "path has a weight");
+  expect(path1).toBeTruthy();
+  expect(path1.path).toBeTruthy();
+  expect(path1.weight).toBeGreaterThan(0);
 
-  path = pathfinder.findPath(point([1, 1]), point([0, 0]));
-  t.notOk(path, "does not have path");
-
-  t.end();
+  const path2 = pathfinder.findPath(point([1, 1]), point([0, 0]));
+  expect(path2).toBeUndefined();
 });
 
-test("can reduce data on edges", function (t) {
-  var pathfinder = new PathFinder(geojson, {
+test("can reduce data on edges", () => {
+  const pathfinder = new PathFinder(geojson, {
       edgeDataReducer: function (a, p) {
         return { id: p.id };
       },
@@ -204,27 +194,25 @@ test("can reduce data on edges", function (t) {
       point([8.44651, 59.513920000000006])
     );
 
-  t.ok(path, "has path");
-  t.ok(path.edgeDatas, "has edge datas");
-  t.ok(
+  expect(path).toBeTruthy();
+  expect(path.edgeDatas).toBeTruthy();
+  expect(
     path.edgeDatas.every(function (e) {
       return e;
     })
-  );
-
-  t.end();
+  ).toBeTruthy();
 });
 
 function edgeReduce(a, p) {
-  var a_arr = a.id;
+  const a_arr = a.id;
   p.id.forEach(function (id) {
     a_arr.push(id);
   });
   return { id: Array.from(new Set(a_arr)) };
 }
 
-test("captures all edge data", function (t) {
-  var pathfinder = new PathFinder(geojson, {
+test("captures all edge data", () => {
+  const pathfinder = new PathFinder(geojson, {
       edgeDataReducer: edgeReduce,
       edgeDataSeed: (properties) => ({ id: [properties.id] }),
     }),
@@ -233,19 +221,17 @@ test("captures all edge data", function (t) {
       point([8.44651, 59.513920000000006])
     );
 
-  t.ok(path, "has path");
-  t.ok(path.edgeDatas, "has edge datas");
-  t.ok(
+  expect(path).toBeTruthy();
+  expect(path.edgeDatas).toBeTruthy();
+  expect(
     path.edgeDatas.some(function (e) {
       return e.id.indexOf(2001) > -1;
     })
-  );
-
-  t.end();
+  ).toBeTruthy();
 });
 
-test("finding a path between nodes not in original graph", function (t) {
-  var pathfinder = new PathFinder(geojson, {
+test("finding a path between nodes not in original graph", () => {
+  const pathfinder = new PathFinder(geojson, {
       edgeDataReducer: function (a, p) {
         return { id: p.id };
       },
@@ -253,6 +239,5 @@ test("finding a path between nodes not in original graph", function (t) {
     }),
     path = pathfinder.findPath(point([8.3, 59.3]), point([8.5, 59.6]));
 
-  t.false(path);
-  t.end();
+  expect(path).toBeUndefined();
 });

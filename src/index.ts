@@ -24,15 +24,15 @@ export default class PathFinder<TEdgeReduce, TProperties> {
     this.graph = preprocess(network, options);
     this.options = options;
 
-    if (
-      Object.keys(this.graph.compactedVertices).filter(function (k) {
-        return k !== "edgeData";
-      }).length === 0
-    ) {
-      throw new Error(
-        "Compacted graph contains no forks (topology has no intersections)."
-      );
-    }
+    // if (
+    //   Object.keys(this.graph.compactedVertices).filter(function (k) {
+    //     return k !== "edgeData";
+    //   }).length === 0
+    // ) {
+    //   throw new Error(
+    //     "Compacted graph contains no forks (topology has no intersections)."
+    //   );
+    // }
   }
 
   findPath(
@@ -132,11 +132,17 @@ export default class PathFinder<TEdgeReduce, TProperties> {
     Object.keys(phantom.incomingEdges).forEach((neighbor) => {
       this.graph.compactedVertices[neighbor][n] =
         phantom.incomingEdges[neighbor];
+      if (!this.graph.compactedCoordinates[neighbor]) {
+        this.graph.compactedCoordinates[neighbor] = {};
+      }
       this.graph.compactedCoordinates[neighbor][n] = [
         this.graph.sourceCoordinates[neighbor],
         ...phantom.incomingCoordinates[neighbor].slice(0, -1),
       ];
       if (this.graph.compactedEdges) {
+        if (!this.graph.compactedEdges[neighbor]) {
+          this.graph.compactedEdges[neighbor] = {};
+        }
         this.graph.compactedEdges[neighbor][n] = phantom.reducedEdges[neighbor];
       }
     });
