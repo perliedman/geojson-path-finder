@@ -47,7 +47,7 @@ To find the shortest path between two coordinates:
 var path = pathFinder.findPath(start, finish);
 ```
 
-Where `start` and `finish` are two GeoJSON `point` features.
+Where `start` and `finish` are two GeoJSON `point` features. Note that both points _have to_ be vertices in the routing network; if they are not, no route will be found.
 
 If a route can be found, an object with two properties: `path` and `weight` is returned, where `path`
 is the coordinates the path runs through, and `weight` is the total weight (distance in kilometers, if you use the default weight function) of the path.
