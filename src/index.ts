@@ -128,8 +128,10 @@ export default class PathFinder<TEdgeReduce, TProperties> {
     Object.keys(phantom.incomingEdges).forEach((neighbor) => {
       this.graph.compactedVertices[neighbor][n] =
         phantom.incomingEdges[neighbor];
-      this.graph.compactedCoordinates[neighbor][n] =
-        phantom.incomingCoordinates[neighbor];
+      this.graph.compactedCoordinates[neighbor][n] = [
+        this.graph.sourceCoordinates[neighbor],
+        ...phantom.incomingCoordinates[neighbor].slice(0, -1),
+      ];
       if (this.graph.compactedEdges) {
         this.graph.compactedEdges[neighbor][n] = phantom.reducedEdges[neighbor];
       }
