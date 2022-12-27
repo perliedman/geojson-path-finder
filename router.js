@@ -1,7 +1,6 @@
 var L = require("leaflet"),
   PathFinder = require("geojson-path-finder").default,
   util = require("./util"),
-  explode = require("turf-explode"),
   nearest = require("turf-nearest"),
   distance = require("@turf/distance").default,
   point = require("@turf/helpers").point,
@@ -62,8 +61,8 @@ function weightFn(a, b, props) {
 module.exports = L.Class.extend({
   initialize: function (geojson) {
     this._pathFinder = new PathFinder(geojson, {
-      precision: 1e-9,
-      weightFn: weightFn,
+      tolerance: 1e-9,
+      weight: weightFn,
     });
     var vertices = this._pathFinder.graph.vertices;
     this._points = featurecollection(

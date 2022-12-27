@@ -100,15 +100,15 @@ var pathFinder = new PathFinder(geojson);</code></pre>
                     geometries. The network will be built into a topology, so that lines that start and end, or cross, at the same coordinate are joined so that you can find a path from one feature to the other. By default, coordinates very
                     close to each other will also be snapped together; by default coordinates with less than 0.00001 difference in
                     latitude or longitude will be considered the same, but this precision can be adjusted with the
-                    <code>precision</code> option:
-                    <pre><code>var pathFinder = new PathFinder(geojson, { precision: 1e-3 });</code></pre>
+                    <code>tolerance</code> option:
+                    <pre><code>var pathFinder = new PathFinder(geojson, { tolerance: 1e-3 });</code></pre>
                 </p>
                 <p>
                     By default, the <em>cost</em> of going from one node in the network to another is determined simply by
                     the geographic distance between the two nodes. This means that, by default, shortest paths will be found.
-                    You can however override this by providing a cost calculation function through the <code>weightFn</code> option:
+                    You can however override this by providing a cost calculation function through the <code>weight</code> option:
                     <pre><code>var pathFinder = new PathFinder(geojson, {
-    weightFn: function(a, b, props) {
+    weight: function(a, b, props) {
         var dx = a[0] - b[0];
         var dy = a[1] - b[1];
         return Math.sqrt(dx * dx + dy * dy);
@@ -119,7 +119,8 @@ var pathFinder = new PathFinder(geojson);</code></pre>
                     <ul>
                         <li>
                             a numeric value for the cost of travelling between the two coordinates; in this case, the cost is assumed
-                            to be the same going from <code>a</code> to <code>b</code> as going from <code>b</code> to <code>a</code>
+                            to be the same going from <code>a</code> to <code>b</code> as going from <code>b</code> to <code>a</code>.
+                            <code>0</code> means the edge can not be used.
                         </li>
                         <li>
                             an object with two properties: <code>forward</code> and <code>backward</code>; in this case,
