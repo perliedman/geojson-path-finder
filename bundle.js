@@ -127,7 +127,7 @@ function initialize(network) {
     }, { position: 'bottomright'}).addTo(map);
 }
 
-},{"./config":1,"./router":82,"@turf/line-distance":8,"gauge-progress":22,"leaflet":37,"leaflet-routing-machine":35,"leaflet.icon.glyph":36,"turf-extent":45}],3:[function(require,module,exports){
+},{"./config":1,"./router":80,"@turf/line-distance":8,"gauge-progress":22,"leaflet":37,"leaflet-routing-machine":35,"leaflet.icon.glyph":36,"turf-extent":44}],3:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var invariant_1 = require("@turf/invariant");
@@ -4897,7 +4897,7 @@ function h () {
   return vdom.h.apply(vdom, arguments)
 }
 
-},{"virtual-dom":54,"virtual-dom/virtual-hyperscript/svg":68}],22:[function(require,module,exports){
+},{"virtual-dom":52,"virtual-dom/virtual-hyperscript/svg":66}],22:[function(require,module,exports){
 var defaults = require('./defaults')
 var render = require('./render')
 var vdom = require('virtual-dom')
@@ -5000,7 +5000,7 @@ Gauge.prototype._progress = function progress (value, total) {
   return 'M' + this.size + ',' + (this.size - this.r) + ' A' + this.r + ',' + this.r + ',' + 0 + ',' + center + ',' + 1 + ',' + rx + ',' + ry
 }
 
-},{"./defaults":20,"./render":24,"main-loop":38,"virtual-dom":54}],23:[function(require,module,exports){
+},{"./defaults":20,"./render":24,"main-loop":38,"virtual-dom":52}],23:[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -38592,53 +38592,7 @@ function toRad(degree) {
   return degree * Math.PI / 180;
 }
 
-},{"turf-invariant":47}],44:[function(require,module,exports){
-var featureCollection = require('turf-featurecollection');
-var each = require('turf-meta').coordEach;
-var point = require('turf-point');
-
-/**
- * Takes any {@link GeoJSON} object and return all positions as
- * a {@link FeatureCollection} of {@link Point} features.
- *
- * @module turf/explode
- * @category misc
- * @param {GeoJSON} input input features
- * @return {FeatureCollection} a FeatureCollection of {@link Point} features representing the exploded input features
- * @throws {Error} if it encounters an unknown geometry type
- * @example
- * var poly = {
- *   "type": "Feature",
- *   "properties": {},
- *   "geometry": {
- *     "type": "Polygon",
- *     "coordinates": [[
- *       [177.434692, -17.77517],
- *       [177.402076, -17.779093],
- *       [177.38079, -17.803937],
- *       [177.40242, -17.826164],
- *       [177.438468, -17.824857],
- *       [177.454948, -17.796746],
- *       [177.434692, -17.77517]
- *     ]]
- *   }
- * };
- *
- * var points = turf.explode(poly);
- *
- * //=poly
- *
- * //=points
- */
-module.exports = function(layer) {
-  var points = [];
-  each(layer, function(coord) {
-    points.push(point(coord));
-  });
-  return featureCollection(points);
-};
-
-},{"turf-featurecollection":46,"turf-meta":48,"turf-point":50}],45:[function(require,module,exports){
+},{"turf-invariant":46}],44:[function(require,module,exports){
 var each = require('turf-meta').coordEach;
 
 /**
@@ -38708,7 +38662,7 @@ module.exports = function(layer) {
     return extent;
 };
 
-},{"turf-meta":48}],46:[function(require,module,exports){
+},{"turf-meta":47}],45:[function(require,module,exports){
 /**
  * Takes one or more {@link Feature|Features} and creates a {@link FeatureCollection}
  *
@@ -38734,7 +38688,7 @@ module.exports = function(features){
   };
 };
 
-},{}],47:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 module.exports.geojsonType = geojsonType;
 module.exports.collectionOf = collectionOf;
 module.exports.featureOf = featureOf;
@@ -38802,7 +38756,7 @@ function collectionOf(value, type, name) {
     }
 }
 
-},{}],48:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 /**
  * Lazily iterate over coordinates in any GeoJSON object, similar to
  * Array.forEach.
@@ -38942,7 +38896,7 @@ function propReduce(layer, callback, memo) {
 }
 module.exports.propReduce = propReduce;
 
-},{}],49:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 var distance = require('turf-distance');
 
 /**
@@ -39025,54 +38979,22 @@ module.exports = function(targetPoint, points){
   return nearestPoint;
 }
 
-},{"turf-distance":43}],50:[function(require,module,exports){
-/**
- * Takes coordinates and properties (optional) and returns a new {@link Point} feature.
- *
- * @module turf/point
- * @category helper
- * @param {number} longitude position west to east in decimal degrees
- * @param {number} latitude position south to north in decimal degrees
- * @param {Object} properties an Object that is used as the {@link Feature}'s
- * properties
- * @return {Point} a Point feature
- * @example
- * var pt1 = turf.point([-75.343, 39.984]);
- *
- * //=pt1
- */
-var isArray = Array.isArray || function(arg) {
-  return Object.prototype.toString.call(arg) === '[object Array]';
-};
-module.exports = function(coordinates, properties) {
-  if (!isArray(coordinates)) throw new Error('Coordinates must be an array');
-  if (coordinates.length < 2) throw new Error('Coordinates must be at least 2 numbers long');
-  return {
-    type: "Feature",
-    geometry: {
-      type: "Point",
-      coordinates: coordinates
-    },
-    properties: properties || {}
-  };
-};
-
-},{}],51:[function(require,module,exports){
+},{"turf-distance":43}],49:[function(require,module,exports){
 var createElement = require("./vdom/create-element.js")
 
 module.exports = createElement
 
-},{"./vdom/create-element.js":57}],52:[function(require,module,exports){
+},{"./vdom/create-element.js":55}],50:[function(require,module,exports){
 var diff = require("./vtree/diff.js")
 
 module.exports = diff
 
-},{"./vtree/diff.js":80}],53:[function(require,module,exports){
+},{"./vtree/diff.js":78}],51:[function(require,module,exports){
 var h = require("./virtual-hyperscript/index.js")
 
 module.exports = h
 
-},{"./virtual-hyperscript/index.js":65}],54:[function(require,module,exports){
+},{"./virtual-hyperscript/index.js":63}],52:[function(require,module,exports){
 var diff = require("./diff.js")
 var patch = require("./patch.js")
 var h = require("./h.js")
@@ -39089,12 +39011,12 @@ module.exports = {
     VText: VText
 }
 
-},{"./create-element.js":51,"./diff.js":52,"./h.js":53,"./patch.js":55,"./vnode/vnode.js":76,"./vnode/vtext.js":78}],55:[function(require,module,exports){
+},{"./create-element.js":49,"./diff.js":50,"./h.js":51,"./patch.js":53,"./vnode/vnode.js":74,"./vnode/vtext.js":76}],53:[function(require,module,exports){
 var patch = require("./vdom/patch.js")
 
 module.exports = patch
 
-},{"./vdom/patch.js":60}],56:[function(require,module,exports){
+},{"./vdom/patch.js":58}],54:[function(require,module,exports){
 var isObject = require("is-object")
 var isHook = require("../vnode/is-vhook.js")
 
@@ -39193,7 +39115,7 @@ function getPrototype(value) {
     }
 }
 
-},{"../vnode/is-vhook.js":71,"is-object":34}],57:[function(require,module,exports){
+},{"../vnode/is-vhook.js":69,"is-object":34}],55:[function(require,module,exports){
 var document = require("global/document")
 
 var applyProperties = require("./apply-properties")
@@ -39241,7 +39163,7 @@ function createElement(vnode, opts) {
     return node
 }
 
-},{"../vnode/handle-thunk.js":69,"../vnode/is-vnode.js":72,"../vnode/is-vtext.js":73,"../vnode/is-widget.js":74,"./apply-properties":56,"global/document":31}],58:[function(require,module,exports){
+},{"../vnode/handle-thunk.js":67,"../vnode/is-vnode.js":70,"../vnode/is-vtext.js":71,"../vnode/is-widget.js":72,"./apply-properties":54,"global/document":31}],56:[function(require,module,exports){
 // Maps a virtual DOM tree onto a real DOM tree in an efficient manner.
 // We don't want to read all of the DOM nodes in the tree so we use
 // the in-order tree indexing to eliminate recursion down certain branches.
@@ -39328,7 +39250,7 @@ function ascending(a, b) {
     return a > b ? 1 : -1
 }
 
-},{}],59:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 var applyProperties = require("./apply-properties")
 
 var isWidget = require("../vnode/is-widget.js")
@@ -39481,7 +39403,7 @@ function replaceRoot(oldRoot, newRoot) {
     return newRoot;
 }
 
-},{"../vnode/is-widget.js":74,"../vnode/vpatch.js":77,"./apply-properties":56,"./update-widget":61}],60:[function(require,module,exports){
+},{"../vnode/is-widget.js":72,"../vnode/vpatch.js":75,"./apply-properties":54,"./update-widget":59}],58:[function(require,module,exports){
 var document = require("global/document")
 var isArray = require("x-is-array")
 
@@ -39563,7 +39485,7 @@ function patchIndices(patches) {
     return indices
 }
 
-},{"./create-element":57,"./dom-index":58,"./patch-op":59,"global/document":31,"x-is-array":81}],61:[function(require,module,exports){
+},{"./create-element":55,"./dom-index":56,"./patch-op":57,"global/document":31,"x-is-array":79}],59:[function(require,module,exports){
 var isWidget = require("../vnode/is-widget.js")
 
 module.exports = updateWidget
@@ -39580,7 +39502,7 @@ function updateWidget(a, b) {
     return false
 }
 
-},{"../vnode/is-widget.js":74}],62:[function(require,module,exports){
+},{"../vnode/is-widget.js":72}],60:[function(require,module,exports){
 'use strict';
 
 module.exports = AttributeHook;
@@ -39617,7 +39539,7 @@ AttributeHook.prototype.unhook = function (node, prop, next) {
 
 AttributeHook.prototype.type = 'AttributeHook';
 
-},{}],63:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 'use strict';
 
 var EvStore = require('ev-store');
@@ -39646,7 +39568,7 @@ EvHook.prototype.unhook = function(node, propertyName) {
     es[propName] = undefined;
 };
 
-},{"ev-store":19}],64:[function(require,module,exports){
+},{"ev-store":19}],62:[function(require,module,exports){
 'use strict';
 
 module.exports = SoftSetHook;
@@ -39665,7 +39587,7 @@ SoftSetHook.prototype.hook = function (node, propertyName) {
     }
 };
 
-},{}],65:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 'use strict';
 
 var isArray = require('x-is-array');
@@ -39804,7 +39726,7 @@ function errorString(obj) {
     }
 }
 
-},{"../vnode/is-thunk":70,"../vnode/is-vhook":71,"../vnode/is-vnode":72,"../vnode/is-vtext":73,"../vnode/is-widget":74,"../vnode/vnode.js":76,"../vnode/vtext.js":78,"./hooks/ev-hook.js":63,"./hooks/soft-set-hook.js":64,"./parse-tag.js":66,"x-is-array":81}],66:[function(require,module,exports){
+},{"../vnode/is-thunk":68,"../vnode/is-vhook":69,"../vnode/is-vnode":70,"../vnode/is-vtext":71,"../vnode/is-widget":72,"../vnode/vnode.js":74,"../vnode/vtext.js":76,"./hooks/ev-hook.js":61,"./hooks/soft-set-hook.js":62,"./parse-tag.js":64,"x-is-array":79}],64:[function(require,module,exports){
 'use strict';
 
 var split = require('browser-split');
@@ -39860,7 +39782,7 @@ function parseTag(tag, props) {
     return props.namespace ? tagName : tagName.toUpperCase();
 }
 
-},{"browser-split":14}],67:[function(require,module,exports){
+},{"browser-split":14}],65:[function(require,module,exports){
 'use strict';
 
 var DEFAULT_NAMESPACE = null;
@@ -40175,7 +40097,7 @@ function SVGAttributeNamespace(value) {
   }
 }
 
-},{}],68:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 'use strict';
 
 var isArray = require('x-is-array');
@@ -40239,7 +40161,7 @@ function isChildren(x) {
     return typeof x === 'string' || isArray(x);
 }
 
-},{"./hooks/attribute-hook":62,"./index.js":65,"./svg-attribute-namespace":67,"x-is-array":81}],69:[function(require,module,exports){
+},{"./hooks/attribute-hook":60,"./index.js":63,"./svg-attribute-namespace":65,"x-is-array":79}],67:[function(require,module,exports){
 var isVNode = require("./is-vnode")
 var isVText = require("./is-vtext")
 var isWidget = require("./is-widget")
@@ -40281,14 +40203,14 @@ function renderThunk(thunk, previous) {
     return renderedThunk
 }
 
-},{"./is-thunk":70,"./is-vnode":72,"./is-vtext":73,"./is-widget":74}],70:[function(require,module,exports){
+},{"./is-thunk":68,"./is-vnode":70,"./is-vtext":71,"./is-widget":72}],68:[function(require,module,exports){
 module.exports = isThunk
 
 function isThunk(t) {
     return t && t.type === "Thunk"
 }
 
-},{}],71:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 module.exports = isHook
 
 function isHook(hook) {
@@ -40297,7 +40219,7 @@ function isHook(hook) {
        typeof hook.unhook === "function" && !hook.hasOwnProperty("unhook"))
 }
 
-},{}],72:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualNode
@@ -40306,7 +40228,7 @@ function isVirtualNode(x) {
     return x && x.type === "VirtualNode" && x.version === version
 }
 
-},{"./version":75}],73:[function(require,module,exports){
+},{"./version":73}],71:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualText
@@ -40315,17 +40237,17 @@ function isVirtualText(x) {
     return x && x.type === "VirtualText" && x.version === version
 }
 
-},{"./version":75}],74:[function(require,module,exports){
+},{"./version":73}],72:[function(require,module,exports){
 module.exports = isWidget
 
 function isWidget(w) {
     return w && w.type === "Widget"
 }
 
-},{}],75:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 module.exports = "2"
 
-},{}],76:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 var version = require("./version")
 var isVNode = require("./is-vnode")
 var isWidget = require("./is-widget")
@@ -40399,7 +40321,7 @@ function VirtualNode(tagName, properties, children, key, namespace) {
 VirtualNode.prototype.version = version
 VirtualNode.prototype.type = "VirtualNode"
 
-},{"./is-thunk":70,"./is-vhook":71,"./is-vnode":72,"./is-widget":74,"./version":75}],77:[function(require,module,exports){
+},{"./is-thunk":68,"./is-vhook":69,"./is-vnode":70,"./is-widget":72,"./version":73}],75:[function(require,module,exports){
 var version = require("./version")
 
 VirtualPatch.NONE = 0
@@ -40423,7 +40345,7 @@ function VirtualPatch(type, vNode, patch) {
 VirtualPatch.prototype.version = version
 VirtualPatch.prototype.type = "VirtualPatch"
 
-},{"./version":75}],78:[function(require,module,exports){
+},{"./version":73}],76:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = VirtualText
@@ -40435,7 +40357,7 @@ function VirtualText(text) {
 VirtualText.prototype.version = version
 VirtualText.prototype.type = "VirtualText"
 
-},{"./version":75}],79:[function(require,module,exports){
+},{"./version":73}],77:[function(require,module,exports){
 var isObject = require("is-object")
 var isHook = require("../vnode/is-vhook")
 
@@ -40495,7 +40417,7 @@ function getPrototype(value) {
   }
 }
 
-},{"../vnode/is-vhook":71,"is-object":34}],80:[function(require,module,exports){
+},{"../vnode/is-vhook":69,"is-object":34}],78:[function(require,module,exports){
 var isArray = require("x-is-array")
 
 var VPatch = require("../vnode/vpatch")
@@ -40924,7 +40846,7 @@ function appendPatch(apply, patch) {
     }
 }
 
-},{"../vnode/handle-thunk":69,"../vnode/is-thunk":70,"../vnode/is-vnode":72,"../vnode/is-vtext":73,"../vnode/is-widget":74,"../vnode/vpatch":77,"./diff-props":79,"x-is-array":81}],81:[function(require,module,exports){
+},{"../vnode/handle-thunk":67,"../vnode/is-thunk":68,"../vnode/is-vnode":70,"../vnode/is-vtext":71,"../vnode/is-widget":72,"../vnode/vpatch":75,"./diff-props":77,"x-is-array":79}],79:[function(require,module,exports){
 var nativeIsArray = Array.isArray
 var toString = Object.prototype.toString
 
@@ -40934,11 +40856,10 @@ function isArray(obj) {
     return toString.call(obj) === "[object Array]"
 }
 
-},{}],82:[function(require,module,exports){
+},{}],80:[function(require,module,exports){
 var L = require("leaflet"),
   PathFinder = require("geojson-path-finder").default,
   util = require("./util"),
-  explode = require("turf-explode"),
   nearest = require("turf-nearest"),
   distance = require("@turf/distance").default,
   point = require("@turf/helpers").point,
@@ -40999,8 +40920,8 @@ function weightFn(a, b, props) {
 module.exports = L.Class.extend({
   initialize: function (geojson) {
     this._pathFinder = new PathFinder(geojson, {
-      precision: 1e-9,
-      weightFn: weightFn,
+      tolerance: 1e-9,
+      weight: weightFn,
     });
     var vertices = this._pathFinder.graph.vertices;
     this._points = featurecollection(
@@ -41083,7 +41004,7 @@ module.exports = L.Class.extend({
   },
 });
 
-},{"./util":83,"@turf/distance":3,"@turf/helpers":6,"geojson-path-finder":27,"leaflet":37,"leaflet-routing-machine":35,"turf-explode":44,"turf-featurecollection":46,"turf-nearest":49}],83:[function(require,module,exports){
+},{"./util":81,"@turf/distance":3,"@turf/helpers":6,"geojson-path-finder":27,"leaflet":37,"leaflet-routing-machine":35,"turf-featurecollection":45,"turf-nearest":48}],81:[function(require,module,exports){
 var L = require('leaflet');
 
 module.exports = {
