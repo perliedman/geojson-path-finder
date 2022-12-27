@@ -72,3 +72,9 @@ export type PathFinderOptions<TEdgeReduce, TProperties> = {
     }
   | {}
 );
+
+export type Path<TEdgeReduce> = {
+  path: Position[];
+  weight: number;
+  edgeDatas: (TEdgeReduce | undefined)[] | undefined;
+};

@@ -31,10 +31,10 @@ Detailed (and somewhat experimental) [API Docs](https://www.liedman.net/geojson-
 Create a path finding object:
 
 ```javascript
-var PathFinder = require("geojson-path-finder"),
-  geojson = require("./network.json");
+import PathFinder from "geojson-path-finder";
+import geojson from "./network.json";
 
-var pathFinder = new PathFinder(geojson);
+const pathFinder = new PathFinder(geojson);
 ```
 
 The GeoJSON object should be a `FeatureCollection` of `LineString` features. The network will be built
@@ -51,6 +51,17 @@ Where `start` and `finish` are two GeoJSON `point` features. Note that both poin
 
 If a route can be found, an object with two properties: `path` and `weight` is returned, where `path`
 is the coordinates the path runs through, and `weight` is the total weight (distance in kilometers, if you use the default weight function) of the path.
+
+As a convenience, the function `pathToGeoJSON` is also exported, it converts the result of a `findPath` call to
+a GeoJSON linestring:
+
+```javascript
+import PathFinder, { pathToGeoJSON } from "geojson-path-finder";
+const pathFinder = new PathFinder(geojson);
+const pathLineString = pathToGeoJSON(pathFinder.findPath(start, finish));
+```
+
+(If `findPath` does not find a path, pathToGeoJSON will also return `undefined`.)
 
 ### `PathFinder` options
 
@@ -75,10 +86,10 @@ the geographic distance between the two nodes. This means that, by default, shor
 You can however override this by providing a cost calculation function through the `weight` option:
 
 ```javascript
-var pathFinder = new PathFinder(geojson, {
+const pathFinder = new PathFinder(geojson, {
   weight: function (a, b, props) {
-    var dx = a[0] - b[0];
-    var dy = a[1] - b[1];
+    const dx = a[0] - b[0];
+    const dy = a[1] - b[1];
     return Math.sqrt(dx * dx + dy * dy);
   },
 });

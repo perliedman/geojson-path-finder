@@ -1,6 +1,7 @@
-import type {
+import {
   Feature,
   FeatureCollection,
+  lineString,
   LineString,
   Point,
   Position,
@@ -10,7 +11,7 @@ import findPath from "./dijkstra";
 import preprocess from "./preprocessor";
 import roundCoord from "./round-coord";
 import { defaultKey } from "./topology";
-import { Key, PathFinderGraph, PathFinderOptions } from "./types";
+import { Key, Path, PathFinderGraph, PathFinderOptions } from "./types";
 
 export default class PathFinder<TEdgeReduce, TProperties> {
   graph: PathFinderGraph<TEdgeReduce>;
@@ -34,7 +35,10 @@ export default class PathFinder<TEdgeReduce, TProperties> {
     }
   }
 
-  findPath(a: Feature<Point>, b: Feature<Point>) {
+  findPath(
+    a: Feature<Point>,
+    b: Feature<Point>
+  ): Path<TEdgeReduce> | undefined {
     const { key = defaultKey, tolerance = 1e-5 } = this.options;
     const start = key(roundCoord(a.geometry.coordinates, tolerance));
     const finish = key(roundCoord(b.geometry.coordinates, tolerance));
@@ -98,7 +102,7 @@ export default class PathFinder<TEdgeReduce, TProperties> {
             : undefined,
         };
       } else {
-        return null;
+        return undefined;
       }
     } finally {
       this._removePhantom(phantomStart);
@@ -161,5 +165,19 @@ export default class PathFinder<TEdgeReduce, TProperties> {
     if (this.graph.compactedEdges) {
       delete this.graph.compactedEdges[n];
     }
+  }
+}
+
+export function pathToGeoJSON<TEdgeReduce>(
+  path: Path<TEdgeReduce> | undefined
+):
+  | Feature<
+      LineString,
+      { weight: number; edgeDatas: (TEdgeReduce | undefined)[] | undefined }
+    >
+  | undefined {
+  if (path) {
+    const { weight, edgeDatas } = path;
+    return lineString(path.path, { weight, edgeDatas });
   }
 }
