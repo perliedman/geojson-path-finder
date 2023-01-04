@@ -16,7 +16,7 @@
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "prepare": "npm test && npm run build",
     "pretest": "npm run build:esm",
-    "test": "vitest"
+    "test": "vitest run"
   },
   "author": "Per Liedman <per@liedman.net>",
   "license": "ISC",
