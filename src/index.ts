@@ -89,10 +89,14 @@ export default class PathFinder<TEdgeReduce, TProperties> {
                 ) => {
                   if (index > 0) {
                     edges.push(
+                      Object.assign({
+                        v1: vertexKeys[index-1],
+                        v2: vertexKey
+                      },
                       this.graph.compactedEdges[vertexKeys[index - 1]][
                         vertexKey
                       ]
-                    );
+                    ));
                   }
 
                   return edges;
