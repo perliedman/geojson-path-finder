@@ -68,7 +68,10 @@ export default function compactGraph<TEdgeData, TProperties>(
     const vertex = vertices[vertexKey];
     const edges = Object.keys(vertex);
 
-    if (shouldCompact(vertices, vertexKey)) {
+    if (
+      shouldCompact(sourceVertices, vertexKey) &&
+      shouldCompact(vertices, vertexKey)
+    ) {
       for (const neighborKey of edges) {
         for (const otherNeighborKey of edges) {
           if (neighborKey !== otherNeighborKey) {
