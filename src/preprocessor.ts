@@ -17,9 +17,9 @@ export default function preprocess<TEdgeReduce, TProperties>(
   } as PathFinderGraph<TEdgeReduce>);
 
   const {
-    graph: compactedVertices,
+    vertices: compactedVertices,
     coordinates: compactedCoordinates,
-    reducedEdges: compactedEdges,
+    edgeData: compactedEdges,
   } = compactGraph(graph.vertices, topology.vertices, graph.edgeData, options);
 
   return {

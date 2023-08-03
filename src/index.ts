@@ -79,27 +79,28 @@ export default class PathFinder<TEdgeReduce, TProperties> {
             )
             .concat([this.graph.sourceCoordinates[finish]]),
           weight,
-          edgeDatas: this.graph.compactedEdges
-            ? path.reduce(
-                (
-                  edges: (TEdgeReduce | undefined)[],
-                  vertexKey: Key,
-                  index: number,
-                  vertexKeys: Key[]
-                ) => {
-                  if (index > 0) {
-                    edges.push(
-                      this.graph.compactedEdges[vertexKeys[index - 1]][
-                        vertexKey
-                      ]
-                    );
-                  }
+          edgeDatas:
+            "edgeDataReducer" in this.options
+              ? path.reduce(
+                  (
+                    edges: (TEdgeReduce | undefined)[],
+                    vertexKey: Key,
+                    index: number,
+                    vertexKeys: Key[]
+                  ) => {
+                    if (index > 0) {
+                      edges.push(
+                        this.graph.compactedEdges[vertexKeys[index - 1]][
+                          vertexKey
+                        ]
+                      );
+                    }
 
-                  return edges;
-                },
-                []
-              )
-            : undefined,
+                    return edges;
+                  },
+                  []
+                )
+              : undefined,
         };
       } else {
         return undefined;
@@ -125,7 +126,7 @@ export default class PathFinder<TEdgeReduce, TProperties> {
     this.graph.compactedVertices[n] = phantom.edges;
     this.graph.compactedCoordinates[n] = phantom.coordinates;
 
-    if (this.graph.compactedEdges) {
+    if ("edgeDataReducer" in this.options) {
       this.graph.compactedEdges[n] = phantom.reducedEdges;
     }
 
@@ -159,7 +160,7 @@ export default class PathFinder<TEdgeReduce, TProperties> {
     Object.keys(this.graph.compactedCoordinates[n]).forEach((neighbor) => {
       delete this.graph.compactedCoordinates[neighbor][n];
     });
-    if (this.graph.compactedEdges) {
+    if ("edgeDataReducer" in this.options) {
       Object.keys(this.graph.compactedEdges[n]).forEach((neighbor) => {
         delete this.graph.compactedEdges[neighbor][n];
       });

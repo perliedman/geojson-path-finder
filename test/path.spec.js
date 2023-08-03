@@ -117,8 +117,31 @@ test("can handle network without forks", () => {
     },
   });
   const path = pathFinder.findPath(point([1, 1]), point([9, 1]));
-  console.log(JSON.stringify(pathToGeoJSON(path)));
+  expect(path).toBeTruthy();
+  expect(path.path).toBeTruthy();
+  expect(path.weight).toBe(8);
 });
+
+test("can handle multiple path searches in network without forks", () => {
+  const pathFinder = new PathFinder(require("./advent24.json"), {
+    weight: function (a, b) {
+      const dx = a[0] - b[0];
+      const dy = a[1] - b[1];
+      return Math.sqrt(dx * dx + dy * dy);
+    },
+  });
+
+  for (let i = 0; i < 2; i++) {
+    pathFinder.findPath(point([1, 1]), point([9, 1]));
+  }
+});
+
+// test("can handle island network", () => {
+//   const pathFinder = new PathFinder(require("./islands.json"));
+//   for (let i = 0; i < 2; i++) {
+//   const path = pathFinder.findPath(point([12.7237479, 55.9095736]), point([12.6766066, 55.9092587]));
+//   }
+// })
 
 test("does not remove vertices from result", (t) => {
   const pathfinder = new PathFinder(geojson66, {
