@@ -1,6 +1,12 @@
 import distance from "@turf/distance";
 import { FeatureCollection, LineString, point, Position } from "@turf/helpers";
-import type { PathFinderGraph, PathFinderOptions, Edge, Key } from "./types";
+import type {
+  PathFinderGraph,
+  PathFinderOptions,
+  Edge,
+  Key,
+  Vertices,
+} from "./types";
 import compactGraph from "./compactor";
 import createTopology from "./topology";
 
@@ -22,15 +28,8 @@ export default function preprocess<TEdgeReduce, TProperties>(
     edgeData: compactedEdges,
   } = compactGraph(graph.vertices, topology.vertices, graph.edgeData, options);
 
-  for (const vertexKey in compactedVertices) {
-    const vertex = compactedVertices[vertexKey];
-    for (const neighborKey in vertex) {
-      const neighbor = vertex[neighborKey];
-      if (neighbor === Infinity) {
-        delete vertex[neighborKey];
-      }
-    }
-  }
+  removeInifityEdges(compactedVertices);
+  removeInifityEdges(graph.vertices);
 
   return {
     vertices: graph.vertices,
@@ -92,4 +91,16 @@ export default function preprocess<TEdgeReduce, TProperties>(
 
 function defaultWeight(a: Position, b: Position) {
   return distance(point(a), point(b));
+}
+
+function removeInifityEdges(vertices: Vertices) {
+  for (const vertexKey in vertices) {
+    const vertex = vertices[vertexKey];
+    for (const neighborKey in vertex) {
+      const neighbor = vertex[neighborKey];
+      if (neighbor === Infinity) {
+        delete vertex[neighborKey];
+      }
+    }
+  }
 }
