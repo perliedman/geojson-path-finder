@@ -9,7 +9,7 @@
     "@turf/line-distance": "^4.7.3",
     "faucet": "^0.0.1",
     "gauge-progress": "^2.1.12",
-    "geojson-path-finder": "^2.0.0",
+    "geojson-path-finder": "^2.0.2-2",
     "leaflet": "^1.0.2",
     "leaflet-routing-machine": "^3.2.4",
     "leaflet.icon.glyph": "^0.2.0",
