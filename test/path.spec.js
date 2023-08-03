@@ -1,10 +1,12 @@
 import { expect, test } from "vitest";
 
-import PathFinder, { pathToGeoJSON } from "../src/index";
+import PathFinder from "../src/index";
 import geojson from "./network.json";
 import geojson66 from "./66.json";
+import largeNetwork from "./large-network.json";
 import { point } from "@turf/helpers";
 import distance from "@turf/distance";
+import osmWeight from "./osm-weight";
 
 test("can create PathFinder", () => {
   const pathfinder = new PathFinder(geojson);
@@ -263,4 +265,18 @@ test("finding a path between nodes not in original graph", () => {
     path = pathfinder.findPath(point([8.3, 59.3]), point([8.5, 59.6]));
 
   expect(path).toBeUndefined();
+});
+
+test("can route through large, complex one-way network", () => {
+  const pathfinder = new PathFinder(largeNetwork, {
+    weight: osmWeight,
+    tolerance: 1e-9,
+  });
+  const path = pathfinder.findPath(
+    point([11.9954516, 57.7125743]),
+    point([11.9608099, 57.6808616])
+  );
+  expect(path).toBeTruthy();
+  expect(path.path).toBeTruthy();
+  expect(path.weight).toBeGreaterThan(0);
 });

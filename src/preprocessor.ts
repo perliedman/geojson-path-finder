@@ -22,6 +22,16 @@ export default function preprocess<TEdgeReduce, TProperties>(
     edgeData: compactedEdges,
   } = compactGraph(graph.vertices, topology.vertices, graph.edgeData, options);
 
+  for (const vertexKey in compactedVertices) {
+    const vertex = compactedVertices[vertexKey];
+    for (const neighborKey in vertex) {
+      const neighbor = vertex[neighborKey];
+      if (neighbor === Infinity) {
+        delete vertex[neighborKey];
+      }
+    }
+  }
+
   return {
     vertices: graph.vertices,
     edgeData: graph.edgeData,
@@ -43,16 +53,16 @@ export default function preprocess<TEdgeReduce, TProperties>(
     if (w) {
       makeEdgeList(a);
       makeEdgeList(b);
+      // If the weight for an edge is falsy, it means the edge is impassable;
+      // we still add the edge to the graph, but with a weight of Infinity,
+      // since this makes compaction easier.
+      // After compaction, we remove any edge with a weight of Infinity.
       if (w instanceof Object) {
-        if (w.forward) {
-          concatEdge(a, b, w.forward);
-        }
-        if (w.backward) {
-          concatEdge(b, a, w.backward);
-        }
+        concatEdge(a, b, w.forward || Infinity);
+        concatEdge(b, a, w.backward || Infinity);
       } else {
-        concatEdge(a, b, w);
-        concatEdge(b, a, w);
+        concatEdge(a, b, w || Infinity);
+        concatEdge(b, a, w || Infinity);
       }
     }
 

@@ -64,31 +64,37 @@ export default function compactGraph<TEdgeData, TProperties>(
   const { vertices, coordinates, edgeData } = result;
   const hasEdgeDataReducer = "edgeDataReducer" in options && edgeData;
 
-  for (const vertexKey of Object.keys(vertices)) {
+  const vertexKeysToCompact = Object.keys(sourceVertices).filter((vertexKey) =>
+    shouldCompact(sourceVertices, vertexKey)
+  );
+
+  for (const vertexKey of vertexKeysToCompact) {
     const vertex = vertices[vertexKey];
     const edges = Object.keys(vertex);
 
-    if (
-      shouldCompact(sourceVertices, vertexKey) &&
-      shouldCompact(vertices, vertexKey)
-    ) {
-      for (const neighborKey of edges) {
-        for (const otherNeighborKey of edges) {
-          if (neighborKey !== otherNeighborKey) {
-            compact(vertexKey, neighborKey, otherNeighborKey);
-            compact(vertexKey, otherNeighborKey, neighborKey);
-          }
+    // No edges means all other vertices around this one have been compacted
+    // and compacting this node would remove this part of the graph; skip compaction.
+    if (edges.length === 0) continue;
+
+    for (const neighborKey of edges) {
+      for (const otherNeighborKey of edges) {
+        if (neighborKey !== otherNeighborKey) {
+          compact(vertexKey, neighborKey, otherNeighborKey);
+          compact(vertexKey, otherNeighborKey, neighborKey);
         }
       }
-
-      for (const neighborKey of edges) {
-        delete vertices[neighborKey][vertexKey];
-        delete coordinates[neighborKey][vertexKey];
-      }
-
-      delete vertices[vertexKey];
-      delete coordinates[vertexKey];
     }
+
+    for (const neighborKey of edges) {
+      if (!vertices[neighborKey]) {
+        throw new Error(`Missing neighbor vertex for ${neighborKey}`);
+      }
+      delete vertices[neighborKey][vertexKey];
+      delete coordinates[neighborKey][vertexKey];
+    }
+
+    delete vertices[vertexKey];
+    delete coordinates[vertexKey];
   }
 
   return result;
@@ -97,8 +103,6 @@ export default function compactGraph<TEdgeData, TProperties>(
     const vertex = vertices[vertexKey];
     const neighbor = vertices[neighborKey];
     const weightFromNeighbor = neighbor[vertexKey];
-    const weightToNeighbor = vertex[neighborKey];
-    const otherNeighbor = vertices[otherNeighborKey];
 
     if (!neighbor[otherNeighborKey] && weightFromNeighbor) {
       neighbor[otherNeighborKey] =
