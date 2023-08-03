@@ -27,7 +27,7 @@ export default function findPath(
     const neighbours = graph[node];
     Object.keys(neighbours).forEach(function (n) {
       var newCost = cost + neighbours[n];
-      if (!(n in costs) || newCost < costs[n]) {
+      if (newCost < Infinity && (!(n in costs) || newCost < costs[n])) {
         costs[n] = newCost;
         const newState: State = [newCost, state[1].concat([n]), n];
         queue.push(newState);

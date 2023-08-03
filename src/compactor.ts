@@ -225,7 +225,7 @@ function findNextFork<TEdgeData, TProperties>(
     weight += edges[next];
 
     if (trackIncoming) {
-      reverseWeight += vertices[next][vertexKey];
+      reverseWeight += vertices[next]?.[vertexKey] || Infinity;
 
       if (path.indexOf(vertexKey) >= 0) {
         ends[vertexKey] = vertices[vertexKey];
