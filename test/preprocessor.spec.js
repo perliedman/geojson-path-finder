@@ -1,7 +1,9 @@
 import largeNetwork from "./large-network.json";
 import preprocess from "../src/preprocessor";
-import { test } from "vitest";
+import { expect, test } from "vitest";
 import osmWeight from "./osm-weight";
+import twoIslands from "./two-islands.json";
+import createTopology from "../src/topology";
 
 test("preprocesses a large network", () => {
   var highwaySpeeds = {
@@ -20,4 +22,9 @@ test("preprocesses a large network", () => {
   var unknowns = {};
 
   preprocess(largeNetwork, { weight: osmWeight, precision: 1e-9 });
+});
+
+test("compacts islands correctly", () => {
+  const graph = preprocess(twoIslands);
+  expect(Object.keys(graph.compactedVertices).length).toEqual(2);
 });
