@@ -1,7 +1,6 @@
 var L = require('leaflet'),
     Router = require('./router'),
     extent = require('turf-extent');
-    gauge = require('gauge-progress')(),
     lineDistance = require('@turf/line-distance'),
     config = require('./config');
 
@@ -18,17 +17,9 @@ L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{
     })
     .addTo(map);
 
-gauge.start();
 var xhr = new XMLHttpRequest();
-xhr.addEventListener('progress', function(oEvent) {
-    if (oEvent.lengthComputable) {
-        gauge.progress(oEvent.loaded, oEvent.total);
-    }
-});
 xhr.onload = function() {
-    gauge.stop();
     if (xhr.status === 200) {
-        gauge.progress(100, 100);
         setTimeout(function() {
             initialize(JSON.parse(xhr.responseText));
         });
@@ -72,7 +63,7 @@ function initialize(network) {
                 return total;
             }
         }, 0),
-        graph = router._pathFinder._graph.compactedVertices,
+        graph = router._pathFinder.graph.compactedVertices,
         nodeNames = Object.keys(graph),
         totalNodes = nodeNames.length,
         totalEdges = nodeNames.reduce(function(total, nodeName) {
@@ -91,7 +82,7 @@ function initialize(network) {
     });
 
     var networkLayer = L.layerGroup(),
-        vertices = router._pathFinder._graph.sourceVertices,
+        vertices = router._pathFinder.graph.sourceCoordinates,
         renderer = L.canvas().addTo(map);
     nodeNames.forEach(function(nodeName) {
         var node = graph[nodeName];
