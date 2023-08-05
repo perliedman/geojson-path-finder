@@ -19,7 +19,6 @@ console.log("                    ___\n                _.-'   ```'--.._          
 var L = require('leaflet'),
     Router = require('./router'),
     extent = require('turf-extent');
-    gauge = require('gauge-progress')(),
     lineDistance = require('@turf/line-distance'),
     config = require('./config');
 
@@ -36,17 +35,9 @@ L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{
     })
     .addTo(map);
 
-gauge.start();
 var xhr = new XMLHttpRequest();
-xhr.addEventListener('progress', function(oEvent) {
-    if (oEvent.lengthComputable) {
-        gauge.progress(oEvent.loaded, oEvent.total);
-    }
-});
 xhr.onload = function() {
-    gauge.stop();
     if (xhr.status === 200) {
-        gauge.progress(100, 100);
         setTimeout(function() {
             initialize(JSON.parse(xhr.responseText));
         });
@@ -90,7 +81,7 @@ function initialize(network) {
                 return total;
             }
         }, 0),
-        graph = router._pathFinder._graph.compactedVertices,
+        graph = router._pathFinder.graph.compactedVertices,
         nodeNames = Object.keys(graph),
         totalNodes = nodeNames.length,
         totalEdges = nodeNames.reduce(function(total, nodeName) {
@@ -109,7 +100,7 @@ function initialize(network) {
     });
 
     var networkLayer = L.layerGroup(),
-        vertices = router._pathFinder._graph.sourceVertices,
+        vertices = router._pathFinder.graph.sourceCoordinates,
         renderer = L.canvas().addTo(map);
     nodeNames.forEach(function(nodeName) {
         var node = graph[nodeName];
@@ -127,7 +118,7 @@ function initialize(network) {
     }, { position: 'bottomright'}).addTo(map);
 }
 
-},{"./config":1,"./router":80,"@turf/line-distance":8,"gauge-progress":22,"leaflet":37,"leaflet-routing-machine":35,"leaflet.icon.glyph":36,"turf-extent":44}],3:[function(require,module,exports){
+},{"./config":1,"./router":29,"@turf/line-distance":8,"leaflet":21,"leaflet-routing-machine":19,"leaflet.icon.glyph":20,"turf-extent":24}],3:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var invariant_1 = require("@turf/invariant");
@@ -4420,619 +4411,6 @@ exports.lineEach = lineEach;
 exports.lineReduce = lineReduce;
 
 },{}],13:[function(require,module,exports){
-
-},{}],14:[function(require,module,exports){
-/*!
- * Cross-Browser Split 1.1.1
- * Copyright 2007-2012 Steven Levithan <stevenlevithan.com>
- * Available under the MIT License
- * ECMAScript compliant, uniform cross-browser split method
- */
-
-/**
- * Splits a string into an array of strings using a regex or string separator. Matches of the
- * separator are not included in the result array. However, if `separator` is a regex that contains
- * capturing groups, backreferences are spliced into the result each time `separator` is matched.
- * Fixes browser bugs compared to the native `String.prototype.split` and can be used reliably
- * cross-browser.
- * @param {String} str String to split.
- * @param {RegExp|String} separator Regex or string to use for separating the string.
- * @param {Number} [limit] Maximum number of items to include in the result array.
- * @returns {Array} Array of substrings.
- * @example
- *
- * // Basic use
- * split('a b c d', ' ');
- * // -> ['a', 'b', 'c', 'd']
- *
- * // With limit
- * split('a b c d', ' ', 2);
- * // -> ['a', 'b']
- *
- * // Backreferences in result array
- * split('..word1 word2..', /([a-z]+)(\d+)/i);
- * // -> ['..', 'word', '1', ' ', 'word', '2', '..']
- */
-module.exports = (function split(undef) {
-
-  var nativeSplit = String.prototype.split,
-    compliantExecNpcg = /()??/.exec("")[1] === undef,
-    // NPCG: nonparticipating capturing group
-    self;
-
-  self = function(str, separator, limit) {
-    // If `separator` is not a regex, use `nativeSplit`
-    if (Object.prototype.toString.call(separator) !== "[object RegExp]") {
-      return nativeSplit.call(str, separator, limit);
-    }
-    var output = [],
-      flags = (separator.ignoreCase ? "i" : "") + (separator.multiline ? "m" : "") + (separator.extended ? "x" : "") + // Proposed for ES6
-      (separator.sticky ? "y" : ""),
-      // Firefox 3+
-      lastLastIndex = 0,
-      // Make `global` and avoid `lastIndex` issues by working with a copy
-      separator = new RegExp(separator.source, flags + "g"),
-      separator2, match, lastIndex, lastLength;
-    str += ""; // Type-convert
-    if (!compliantExecNpcg) {
-      // Doesn't need flags gy, but they don't hurt
-      separator2 = new RegExp("^" + separator.source + "$(?!\\s)", flags);
-    }
-    /* Values for `limit`, per the spec:
-     * If undefined: 4294967295 // Math.pow(2, 32) - 1
-     * If 0, Infinity, or NaN: 0
-     * If positive number: limit = Math.floor(limit); if (limit > 4294967295) limit -= 4294967296;
-     * If negative number: 4294967296 - Math.floor(Math.abs(limit))
-     * If other: Type-convert, then use the above rules
-     */
-    limit = limit === undef ? -1 >>> 0 : // Math.pow(2, 32) - 1
-    limit >>> 0; // ToUint32(limit)
-    while (match = separator.exec(str)) {
-      // `separator.lastIndex` is not reliable cross-browser
-      lastIndex = match.index + match[0].length;
-      if (lastIndex > lastLastIndex) {
-        output.push(str.slice(lastLastIndex, match.index));
-        // Fix browsers whose `exec` methods don't consistently return `undefined` for
-        // nonparticipating capturing groups
-        if (!compliantExecNpcg && match.length > 1) {
-          match[0].replace(separator2, function() {
-            for (var i = 1; i < arguments.length - 2; i++) {
-              if (arguments[i] === undef) {
-                match[i] = undef;
-              }
-            }
-          });
-        }
-        if (match.length > 1 && match.index < str.length) {
-          Array.prototype.push.apply(output, match.slice(1));
-        }
-        lastLength = match[0].length;
-        lastLastIndex = lastIndex;
-        if (output.length >= limit) {
-          break;
-        }
-      }
-      if (separator.lastIndex === match.index) {
-        separator.lastIndex++; // Avoid an infinite loop
-      }
-    }
-    if (lastLastIndex === str.length) {
-      if (lastLength || !separator.test("")) {
-        output.push("");
-      }
-    } else {
-      output.push(str.slice(lastLastIndex));
-    }
-    return output.length > limit ? output.slice(0, limit) : output;
-  };
-
-  return self;
-})();
-
-},{}],15:[function(require,module,exports){
-// shim for using process in browser
-var process = module.exports = {};
-
-// cached from whatever global is present so that test runners that stub it
-// don't break things.  But we need to wrap it in a try catch in case it is
-// wrapped in strict mode code which doesn't define any globals.  It's inside a
-// function because try/catches deoptimize in certain engines.
-
-var cachedSetTimeout;
-var cachedClearTimeout;
-
-function defaultSetTimout() {
-    throw new Error('setTimeout has not been defined');
-}
-function defaultClearTimeout () {
-    throw new Error('clearTimeout has not been defined');
-}
-(function () {
-    try {
-        if (typeof setTimeout === 'function') {
-            cachedSetTimeout = setTimeout;
-        } else {
-            cachedSetTimeout = defaultSetTimout;
-        }
-    } catch (e) {
-        cachedSetTimeout = defaultSetTimout;
-    }
-    try {
-        if (typeof clearTimeout === 'function') {
-            cachedClearTimeout = clearTimeout;
-        } else {
-            cachedClearTimeout = defaultClearTimeout;
-        }
-    } catch (e) {
-        cachedClearTimeout = defaultClearTimeout;
-    }
-} ())
-function runTimeout(fun) {
-    if (cachedSetTimeout === setTimeout) {
-        //normal enviroments in sane situations
-        return setTimeout(fun, 0);
-    }
-    // if setTimeout wasn't available but was latter defined
-    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
-        cachedSetTimeout = setTimeout;
-        return setTimeout(fun, 0);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedSetTimeout(fun, 0);
-    } catch(e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
-            return cachedSetTimeout.call(null, fun, 0);
-        } catch(e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
-            return cachedSetTimeout.call(this, fun, 0);
-        }
-    }
-
-
-}
-function runClearTimeout(marker) {
-    if (cachedClearTimeout === clearTimeout) {
-        //normal enviroments in sane situations
-        return clearTimeout(marker);
-    }
-    // if clearTimeout wasn't available but was latter defined
-    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
-        cachedClearTimeout = clearTimeout;
-        return clearTimeout(marker);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedClearTimeout(marker);
-    } catch (e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
-            return cachedClearTimeout.call(null, marker);
-        } catch (e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
-            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
-            return cachedClearTimeout.call(this, marker);
-        }
-    }
-
-
-
-}
-var queue = [];
-var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-    if (!draining || !currentQueue) {
-        return;
-    }
-    draining = false;
-    if (currentQueue.length) {
-        queue = currentQueue.concat(queue);
-    } else {
-        queueIndex = -1;
-    }
-    if (queue.length) {
-        drainQueue();
-    }
-}
-
-function drainQueue() {
-    if (draining) {
-        return;
-    }
-    var timeout = runTimeout(cleanUpNextTick);
-    draining = true;
-
-    var len = queue.length;
-    while(len) {
-        currentQueue = queue;
-        queue = [];
-        while (++queueIndex < len) {
-            if (currentQueue) {
-                currentQueue[queueIndex].run();
-            }
-        }
-        queueIndex = -1;
-        len = queue.length;
-    }
-    currentQueue = null;
-    draining = false;
-    runClearTimeout(timeout);
-}
-
-process.nextTick = function (fun) {
-    var args = new Array(arguments.length - 1);
-    if (arguments.length > 1) {
-        for (var i = 1; i < arguments.length; i++) {
-            args[i - 1] = arguments[i];
-        }
-    }
-    queue.push(new Item(fun, args));
-    if (queue.length === 1 && !draining) {
-        runTimeout(drainQueue);
-    }
-};
-
-// v8 likes predictible objects
-function Item(fun, array) {
-    this.fun = fun;
-    this.array = array;
-}
-Item.prototype.run = function () {
-    this.fun.apply(null, this.array);
-};
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-process.version = ''; // empty string to avoid regexp issues
-process.versions = {};
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-process.prependListener = noop;
-process.prependOnceListener = noop;
-
-process.listeners = function (name) { return [] }
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-};
-
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-process.umask = function() { return 0; };
-
-},{}],16:[function(require,module,exports){
-module.exports = function(obj) {
-    if (typeof obj === 'string') return camelCase(obj);
-    return walk(obj);
-};
-
-function walk (obj) {
-    if (!obj || typeof obj !== 'object') return obj;
-    if (isDate(obj) || isRegex(obj)) return obj;
-    if (isArray(obj)) return map(obj, walk);
-    return reduce(objectKeys(obj), function (acc, key) {
-        var camel = camelCase(key);
-        acc[camel] = walk(obj[key]);
-        return acc;
-    }, {});
-}
-
-function camelCase(str) {
-    return str.replace(/[_.-](\w|$)/g, function (_,x) {
-        return x.toUpperCase();
-    });
-}
-
-var isArray = Array.isArray || function (obj) {
-    return Object.prototype.toString.call(obj) === '[object Array]';
-};
-
-var isDate = function (obj) {
-    return Object.prototype.toString.call(obj) === '[object Date]';
-};
-
-var isRegex = function (obj) {
-    return Object.prototype.toString.call(obj) === '[object RegExp]';
-};
-
-var has = Object.prototype.hasOwnProperty;
-var objectKeys = Object.keys || function (obj) {
-    var keys = [];
-    for (var key in obj) {
-        if (has.call(obj, key)) keys.push(key);
-    }
-    return keys;
-};
-
-function map (xs, f) {
-    if (xs.map) return xs.map(f);
-    var res = [];
-    for (var i = 0; i < xs.length; i++) {
-        res.push(f(xs[i], i));
-    }
-    return res;
-}
-
-function reduce (xs, f, acc) {
-    if (xs.reduce) return xs.reduce(f, acc);
-    for (var i = 0; i < xs.length; i++) {
-        acc = f(acc, xs[i], i);
-    }
-    return acc;
-}
-
-},{}],17:[function(require,module,exports){
-module.exports = extend
-
-var hasOwnProperty = Object.prototype.hasOwnProperty;
-
-function extend(target) {
-    for (var i = 1; i < arguments.length; i++) {
-        var source = arguments[i]
-
-        for (var key in source) {
-            if (hasOwnProperty.call(source, key)) {
-                target[key] = source[key]
-            }
-        }
-    }
-
-    return target
-}
-
-},{}],18:[function(require,module,exports){
-var camelize = require("camelize")
-var template = require("string-template")
-var extend = require("xtend/mutable")
-
-module.exports = TypedError
-
-function TypedError(args) {
-    if (!args) {
-        throw new Error("args is required");
-    }
-    if (!args.type) {
-        throw new Error("args.type is required");
-    }
-    if (!args.message) {
-        throw new Error("args.message is required");
-    }
-
-    var message = args.message
-
-    if (args.type && !args.name) {
-        var errorName = camelize(args.type) + "Error"
-        args.name = errorName[0].toUpperCase() + errorName.substr(1)
-    }
-
-    extend(createError, args);
-    createError._name = args.name;
-
-    return createError;
-
-    function createError(opts) {
-        var result = new Error()
-
-        Object.defineProperty(result, "type", {
-            value: result.type,
-            enumerable: true,
-            writable: true,
-            configurable: true
-        })
-
-        var options = extend({}, args, opts)
-
-        extend(result, options)
-        result.message = template(message, options)
-
-        return result
-    }
-}
-
-
-},{"camelize":16,"string-template":41,"xtend/mutable":17}],19:[function(require,module,exports){
-'use strict';
-
-var OneVersionConstraint = require('individual/one-version');
-
-var MY_VERSION = '7';
-OneVersionConstraint('ev-store', MY_VERSION);
-
-var hashKey = '__EV_STORE_KEY@' + MY_VERSION;
-
-module.exports = EvStore;
-
-function EvStore(elem) {
-    var hash = elem[hashKey];
-
-    if (!hash) {
-        hash = elem[hashKey] = {};
-    }
-
-    return hash;
-}
-
-},{"individual/one-version":33}],20:[function(require,module,exports){
-var xtend = require('xtend')
-
-module.exports = defaults
-
-function defaults (opt) {
-  return xtend({
-    size: 100,
-    loading: 'loading',
-    fgcolor: '#00FF00',
-    bgcolor: '#222',
-    textcolor: '#222',
-    font: 'arial,monospace',
-    overlaycolor: 'white',
-    overlayopacity: 0.7,
-    appendTo: window.document.body
-  }, opt)
-}
-
-},{"xtend":23}],21:[function(require,module,exports){
-var svg = require('virtual-dom/virtual-hyperscript/svg')
-var vdom = require('virtual-dom')
-module.exports = h
-
-function h () {
-  var tag = arguments[0]
-  if (/svg|circle|path|text/.test(tag)) return svg.apply(svg, arguments)
-  return vdom.h.apply(vdom, arguments)
-}
-
-},{"virtual-dom":52,"virtual-dom/virtual-hyperscript/svg":66}],22:[function(require,module,exports){
-var defaults = require('./defaults')
-var render = require('./render')
-var vdom = require('virtual-dom')
-var mainloop = require('main-loop')
-
-module.exports = Gauge
-
-function Gauge (opt) {
-  if (!(this instanceof Gauge)) return new Gauge(opt)
-  opt = defaults(opt)
-  this.r = opt.size / 1.3
-  this.size = opt.size
-  var fontsize = opt.size / 4
-  var strokewidth = fontsize / 2
-  this.state = {
-    overlay: {
-      style: {
-        display: typeof opt.overlay !== 'undefined' && !opt.overlay ? 'none' : '',
-        position: 'fixed',
-        width: '100%',
-        height: '100%',
-        zIndex: 1111111111,
-        backgroundColor: opt.overlaycolor,
-        opacity: opt.overlayopacity,
-        left: 0,
-        top: 0
-      }
-    },
-    gauge: {
-      style: {
-        position: 'fixed',
-        left: 'calc(50% - ' + opt.size + 'px)',
-        top: 'calc(50% - ' + opt.size + 'px)',
-        zIndex: 2222222222
-      }
-    },
-    circle: {
-      cx: opt.size,
-      cy: opt.size,
-      r: this.r,
-      style: {
-        strokeWidth: strokewidth,
-        stroke: opt.bgcolor
-      }
-    },
-    progress: {
-      d: '',
-      style: {
-        strokeWidth: strokewidth * 0.7,
-        stroke: opt.fgcolor
-      }
-    },
-    loading: {
-      x: opt.size,
-      y: opt.size - (fontsize * 1.3),
-      value: opt.loading,
-      style: {
-        fill: opt.textcolor,
-        fontFamily: opt.font,
-        fontSize: (fontsize * 0.7) + 'px'
-      }
-    },
-    percentage: {
-      x: opt.size,
-      y: opt.size,
-      value: '',
-      style: {
-        fill: opt.textcolor,
-        fontFamily: opt.font,
-        fontSize: fontsize + 'px'
-      }
-    }
-  }
-  this.loop = mainloop(this.state, render, vdom)
-  this.appendTo = opt.appendTo || document.body
-}
-
-Gauge.prototype.start = function start () {
-  this.appendTo.appendChild(this.loop.target)
-}
-
-Gauge.prototype.stop = function stop () {
-  var el = this.loop.target.parentNode
-  if (el) el.removeChild(this.loop.target)
-}
-
-Gauge.prototype.progress = function progress (value, total) {
-  if (!this.loop.target.parentNode) return
-  this.state.progress.d = this._progress(value, total)
-  this.state.percentage.value = Math.floor(value / total * 100) + '%'
-  this.loop.update(this.state)
-}
-
-Gauge.prototype._progress = function progress (value, total) {
-  var alpha = 360 / total * value
-  var a = (90 - alpha) * Math.PI / 180
-  var rx = this.size + (this.r * Math.cos(a))
-  var ry = this.size - (this.r * Math.sin(a))
-  var center = alpha > 180 ? 1 : 0
-  return 'M' + this.size + ',' + (this.size - this.r) + ' A' + this.r + ',' + this.r + ',' + 0 + ',' + center + ',' + 1 + ',' + rx + ',' + ry
-}
-
-},{"./defaults":20,"./render":24,"main-loop":38,"virtual-dom":52}],23:[function(require,module,exports){
-module.exports = extend
-
-var hasOwnProperty = Object.prototype.hasOwnProperty;
-
-function extend() {
-    var target = {}
-
-    for (var i = 0; i < arguments.length; i++) {
-        var source = arguments[i]
-
-        for (var key in source) {
-            if (hasOwnProperty.call(source, key)) {
-                target[key] = source[key]
-            }
-        }
-    }
-
-    return target
-}
-
-},{}],24:[function(require,module,exports){
-var hyperx = 0
-var h = require('./h')
-var hx = 0
-
-module.exports = render
-
-function render (state) {
-  return h("div",{"className":"gauge-widget"},["\n    ",h("div",{"className":"overlay","style":state.overlay.style}),"\n    ",h("svg",{"style":state.gauge.style,"width":"100%","height":"100%"},["\n      ",h("circle",{"fill":"transparent","style":state.circle.style,"cx":state.circle.cx,"cy":state.circle.cy,"r":state.circle.r}),"\n      ",h("path",{"fill":"transparent","style":state.progress.style,"d":state.progress.d}),"\n      ",h("text",{"text-anchor":"middle","style":state.loading.style,"x":state.loading.x,"y":state.loading.y},[state.loading.value]),"\n      ",h("text",{"text-anchor":"middle","style":state.percentage.style,"x":state.percentage.x,"y":state.percentage.y},[state.percentage.value]),"\n    "]),"\n  "])
-}
-
-},{"./h":21}],25:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.compactNode = void 0;
@@ -5047,63 +4425,85 @@ exports.compactNode = void 0;
  * The idea is to reduce the number of nodes in the graph, which drasticly
  * reduces the complexity of Dijkstra's algorithm.
  *
- * @param vertices the graph's vertices (a lookup of vertex edges and weights)
+ * @param sourceVertices the graph's vertices (a lookup of vertex edges and weights)
  * @param vertexCoords the geographic coordinates of the vertices
  * @param edgeData the (optional) data associated with each edge
  * @param options options used for creating and compacting the graph
  * @returns
  */
-function compactGraph(vertices, vertexCoords, edgeData, options = {}) {
-    const { progress, compact = true } = options;
-    const ends = Object.keys(vertices).reduce(findForks, {});
-    return Object.keys(ends).reduce(compactFork, {
-        graph: {},
-        coordinates: {},
-        reducedEdges: {},
-    });
-    function findForks(ends, key, index, vertexKeys) {
-        const vertex = vertices[key];
+function compactGraph(sourceVertices, vertexCoords, sourceEdgeData, options = {}) {
+    const result = {
+        vertices: Object.keys(sourceVertices).reduce((clonedVertices, vertexKey) => {
+            clonedVertices[vertexKey] = { ...sourceVertices[vertexKey] };
+            return clonedVertices;
+        }, {}),
+        coordinates: Object.keys(sourceVertices).reduce((coordinates, vertexKey) => {
+            coordinates[vertexKey] = {};
+            for (const neighborKey of Object.keys(sourceVertices[vertexKey])) {
+                coordinates[vertexKey][neighborKey] = [vertexCoords[vertexKey]];
+            }
+            return coordinates;
+        }, {}),
+        edgeData: "edgeDataReducer" in options
+            ? Object.keys(sourceVertices).reduce((compactedEdges, vertexKey) => {
+                compactedEdges[vertexKey] = Object.keys(sourceVertices[vertexKey]).reduce((compactedEdges, targetKey) => {
+                    compactedEdges[targetKey] = sourceEdgeData[vertexKey][targetKey];
+                    return compactedEdges;
+                }, {});
+                return compactedEdges;
+            }, {})
+            : {},
+    };
+    const { vertices, coordinates, edgeData } = result;
+    const hasEdgeDataReducer = "edgeDataReducer" in options && edgeData;
+    const vertexKeysToCompact = Object.keys(sourceVertices).filter((vertexKey) => shouldCompact(sourceVertices, vertexKey));
+    for (const vertexKey of vertexKeysToCompact) {
+        const vertex = vertices[vertexKey];
         const edges = Object.keys(vertex);
-        const numberEdges = edges.length;
-        let isEnd;
-        if (!compact) {
-            // If instructed not to compact, everything is treated as a fork
-            // (can't be compacted)
-            isEnd = true;
+        // No edges means all other vertices around this one have been compacted
+        // and compacting this node would remove this part of the graph; skip compaction.
+        if (edges.length === 0)
+            continue;
+        for (const neighborKey of edges) {
+            for (const otherNeighborKey of edges) {
+                if (neighborKey !== otherNeighborKey) {
+                    compact(vertexKey, neighborKey, otherNeighborKey);
+                    compact(vertexKey, otherNeighborKey, neighborKey);
+                }
+            }
         }
-        else if (numberEdges === 1) {
-            // A vertex with a single edge A->B is a fork
-            // if B has an edge to A.
-            // (It's a fork in the sense that it is a dead end and you can only turn back to B.)
-            const other = vertices[edges[0]];
-            isEnd = other[key];
+        for (const neighborKey of edges) {
+            if (!vertices[neighborKey]) {
+                throw new Error(`Missing neighbor vertex for ${neighborKey}`);
+            }
+            delete vertices[neighborKey][vertexKey];
+            delete coordinates[neighborKey][vertexKey];
         }
-        else if (numberEdges === 2) {
-            // A vertex A which lies between two vertices B and C (only has two edges)
-            // is only a fork if you can't go back to A from at least one of them.
-            isEnd = edges.some((n) => !vertices[n][key]);
-        }
-        else {
-            // A vertex with more than two edges (a fork) is always a fork
-            isEnd = true;
-        }
-        if (isEnd) {
-            ends[key] = vertex;
-        }
-        if (index % 1000 === 0 && progress) {
-            progress("compact:ends", index, vertexKeys.length);
-        }
-        return ends;
+        delete vertices[vertexKey];
+        delete coordinates[vertexKey];
     }
-    function compactFork(result, key, index, forks) {
-        var compacted = compactNode(key, vertices, ends, vertexCoords, edgeData, false, options);
-        result.graph[key] = compacted.edges;
-        result.coordinates[key] = compacted.coordinates;
-        result.reducedEdges[key] = compacted.reducedEdges;
-        if (index % 1000 === 0 && progress) {
-            progress("compact:nodes", index, forks.length);
+    return result;
+    function compact(vertexKey, neighborKey, otherNeighborKey) {
+        const vertex = vertices[vertexKey];
+        const neighbor = vertices[neighborKey];
+        const weightFromNeighbor = neighbor[vertexKey];
+        if (!neighbor[otherNeighborKey] && weightFromNeighbor) {
+            neighbor[otherNeighborKey] =
+                weightFromNeighbor + vertex[otherNeighborKey];
+            coordinates[neighborKey][otherNeighborKey] = [
+                ...coordinates[neighborKey][vertexKey],
+                ...coordinates[vertexKey][otherNeighborKey],
+            ];
+            let reducedEdge = hasEdgeDataReducer
+                ? edgeData[neighborKey][vertexKey]
+                : undefined;
+            const otherEdgeData = hasEdgeDataReducer
+                ? edgeData[vertexKey][otherNeighborKey]
+                : undefined;
+            if (hasEdgeDataReducer && reducedEdge && otherEdgeData) {
+                edgeData[neighborKey][otherNeighborKey] = options.edgeDataReducer(reducedEdge, otherEdgeData);
+            }
         }
-        return result;
     }
 }
 exports.default = compactGraph;
@@ -5157,7 +4557,7 @@ function findNextFork(prev, vertexKey, vertices, ends, vertexCoords, edgeData, t
         })[0];
         weight += edges[next];
         if (trackIncoming) {
-            reverseWeight += vertices[next][vertexKey];
+            reverseWeight += vertices[next]?.[vertexKey] || Infinity;
             if (path.indexOf(vertexKey) >= 0) {
                 ends[vertexKey] = vertices[vertexKey];
                 break;
@@ -5180,8 +4580,30 @@ function findNextFork(prev, vertexKey, vertices, ends, vertexCoords, edgeData, t
         reducedEdge: reducedEdge,
     };
 }
+function shouldCompact(vertices, vertexKey) {
+    const vertex = vertices[vertexKey];
+    const edges = Object.keys(vertex);
+    const numberEdges = edges.length;
+    switch (numberEdges) {
+        case 1: {
+            // A vertex A with a single edge A->B is a fork
+            // if B has an edge to A.
+            // (It's a fork in the sense that it is a dead end and you can only turn back to B.)
+            const other = vertices[edges[0]];
+            return !other[vertexKey];
+        }
+        case 2: {
+            // A vertex A which lies between two vertices B and C (only has two edges)
+            // is only a fork if you can't go back to A from at least one of them.
+            return edges.every((n) => vertices[n][vertexKey]);
+        }
+        default:
+            // A vertex with more than two edges (a fork) is always a fork
+            return false;
+    }
+}
 
-},{}],26:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -5205,7 +4627,7 @@ function findPath(graph, start, end) {
         const neighbours = graph[node];
         Object.keys(neighbours).forEach(function (n) {
             var newCost = cost + neighbours[n];
-            if (!(n in costs) || newCost < costs[n]) {
+            if (newCost < Infinity && (!(n in costs) || newCost < costs[n])) {
                 costs[n] = newCost;
                 const newState = [newCost, state[1].concat([n]), n];
                 queue.push(newState);
@@ -5215,12 +4637,14 @@ function findPath(graph, start, end) {
 }
 exports.default = findPath;
 
-},{"tinyqueue":42}],27:[function(require,module,exports){
+},{"tinyqueue":22}],15:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.pathToGeoJSON = void 0;
+const helpers_1 = require("@turf/helpers");
 const compactor_1 = require("./compactor");
 const dijkstra_1 = __importDefault(require("./dijkstra"));
 const preprocessor_1 = __importDefault(require("./preprocessor"));
@@ -5230,11 +4654,15 @@ class PathFinder {
     constructor(network, options = {}) {
         this.graph = (0, preprocessor_1.default)(network, options);
         this.options = options;
-        if (Object.keys(this.graph.compactedVertices).filter(function (k) {
-            return k !== "edgeData";
-        }).length === 0) {
-            throw new Error("Compacted graph contains no forks (topology has no intersections).");
-        }
+        // if (
+        //   Object.keys(this.graph.compactedVertices).filter(function (k) {
+        //     return k !== "edgeData";
+        //   }).length === 0
+        // ) {
+        //   throw new Error(
+        //     "Compacted graph contains no forks (topology has no intersections)."
+        //   );
+        // }
     }
     findPath(a, b) {
         const { key = topology_1.defaultKey, tolerance = 1e-5 } = this.options;
@@ -5261,7 +4689,7 @@ class PathFinder {
                     }, [])
                         .concat([this.graph.sourceCoordinates[finish]]),
                     weight,
-                    edgeDatas: this.graph.compactedEdges
+                    edgeDatas: "edgeDataReducer" in this.options
                         ? path.reduce((edges, vertexKey, index, vertexKeys) => {
                             if (index > 0) {
                                 edges.push(this.graph.compactedEdges[vertexKeys[index - 1]][vertexKey]);
@@ -5272,7 +4700,7 @@ class PathFinder {
                 };
             }
             else {
-                return null;
+                return undefined;
             }
         }
         finally {
@@ -5286,15 +4714,23 @@ class PathFinder {
         const phantom = (0, compactor_1.compactNode)(n, this.graph.vertices, this.graph.compactedVertices, this.graph.sourceCoordinates, this.graph.edgeData, true, this.options);
         this.graph.compactedVertices[n] = phantom.edges;
         this.graph.compactedCoordinates[n] = phantom.coordinates;
-        if (this.graph.compactedEdges) {
+        if ("edgeDataReducer" in this.options) {
             this.graph.compactedEdges[n] = phantom.reducedEdges;
         }
         Object.keys(phantom.incomingEdges).forEach((neighbor) => {
             this.graph.compactedVertices[neighbor][n] =
                 phantom.incomingEdges[neighbor];
-            this.graph.compactedCoordinates[neighbor][n] =
-                phantom.incomingCoordinates[neighbor];
+            if (!this.graph.compactedCoordinates[neighbor]) {
+                this.graph.compactedCoordinates[neighbor] = {};
+            }
+            this.graph.compactedCoordinates[neighbor][n] = [
+                this.graph.sourceCoordinates[neighbor],
+                ...phantom.incomingCoordinates[neighbor].slice(0, -1),
+            ];
             if (this.graph.compactedEdges) {
+                if (!this.graph.compactedEdges[neighbor]) {
+                    this.graph.compactedEdges[neighbor] = {};
+                }
                 this.graph.compactedEdges[neighbor][n] = phantom.reducedEdges[neighbor];
             }
         });
@@ -5309,7 +4745,7 @@ class PathFinder {
         Object.keys(this.graph.compactedCoordinates[n]).forEach((neighbor) => {
             delete this.graph.compactedCoordinates[neighbor][n];
         });
-        if (this.graph.compactedEdges) {
+        if ("edgeDataReducer" in this.options) {
             Object.keys(this.graph.compactedEdges[n]).forEach((neighbor) => {
                 delete this.graph.compactedEdges[neighbor][n];
             });
@@ -5322,8 +4758,15 @@ class PathFinder {
     }
 }
 exports.default = PathFinder;
+function pathToGeoJSON(path) {
+    if (path) {
+        const { weight, edgeDatas } = path;
+        return (0, helpers_1.lineString)(path.path, { weight, edgeDatas });
+    }
+}
+exports.pathToGeoJSON = pathToGeoJSON;
 
-},{"./compactor":25,"./dijkstra":26,"./preprocessor":28,"./round-coord":29,"./topology":30}],28:[function(require,module,exports){
+},{"./compactor":13,"./dijkstra":14,"./preprocessor":16,"./round-coord":17,"./topology":18,"@turf/helpers":6}],16:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -5340,7 +4783,7 @@ function preprocess(network, options = {}) {
         edgeData: {},
         vertices: {},
     });
-    const { graph: compactedVertices, coordinates: compactedCoordinates, reducedEdges: compactedEdges, } = (0, compactor_1.default)(graph.vertices, topology.vertices, graph.edgeData, options);
+    const { vertices: compactedVertices, coordinates: compactedCoordinates, edgeData: compactedEdges, } = (0, compactor_1.default)(graph.vertices, topology.vertices, graph.edgeData, options);
     return {
         vertices: graph.vertices,
         edgeData: graph.edgeData,
@@ -5355,17 +4798,17 @@ function preprocess(network, options = {}) {
         if (w) {
             makeEdgeList(a);
             makeEdgeList(b);
+            // If the weight for an edge is falsy, it means the edge is impassable;
+            // we still add the edge to the graph, but with a weight of Infinity,
+            // since this makes compaction easier.
+            // After compaction, we remove any edge with a weight of Infinity.
             if (w instanceof Object) {
-                if (w.forward) {
-                    concatEdge(a, b, w.forward);
-                }
-                if (w.backward) {
-                    concatEdge(b, a, w.backward);
-                }
+                concatEdge(a, b, w.forward || Infinity);
+                concatEdge(b, a, w.backward || Infinity);
             }
             else {
-                concatEdge(a, b, w);
-                concatEdge(b, a, w);
+                concatEdge(a, b, w || Infinity);
+                concatEdge(b, a, w || Infinity);
             }
         }
         if (i % 1000 === 0 && options.progress) {
@@ -5393,7 +4836,7 @@ function defaultWeight(a, b) {
     return (0, distance_1.default)((0, helpers_1.point)(a), (0, helpers_1.point)(b));
 }
 
-},{"./compactor":25,"./topology":30,"@turf/distance":3,"@turf/helpers":6}],29:[function(require,module,exports){
+},{"./compactor":13,"./topology":18,"@turf/distance":3,"@turf/helpers":6}],17:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function roundCoord(coord, tolerance) {
@@ -5404,7 +4847,7 @@ function roundCoord(coord, tolerance) {
 }
 exports.default = roundCoord;
 
-},{}],30:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -5458,82 +4901,7 @@ function defaultKey(c) {
 }
 exports.defaultKey = defaultKey;
 
-},{"./round-coord":29,"@turf/explode":4,"@turf/helpers":6}],31:[function(require,module,exports){
-(function (global){
-var topLevel = typeof global !== 'undefined' ? global :
-    typeof window !== 'undefined' ? window : {}
-var minDoc = require('min-document');
-
-var doccy;
-
-if (typeof document !== 'undefined') {
-    doccy = document;
-} else {
-    doccy = topLevel['__GLOBAL_DOCUMENT_CACHE@4'];
-
-    if (!doccy) {
-        doccy = topLevel['__GLOBAL_DOCUMENT_CACHE@4'] = minDoc;
-    }
-}
-
-module.exports = doccy;
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"min-document":13}],32:[function(require,module,exports){
-(function (global){
-'use strict';
-
-/*global window, global*/
-
-var root = typeof window !== 'undefined' ?
-    window : typeof global !== 'undefined' ?
-    global : {};
-
-module.exports = Individual;
-
-function Individual(key, value) {
-    if (key in root) {
-        return root[key];
-    }
-
-    root[key] = value;
-
-    return value;
-}
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],33:[function(require,module,exports){
-'use strict';
-
-var Individual = require('./index.js');
-
-module.exports = OneVersion;
-
-function OneVersion(moduleName, version, defaultValue) {
-    var key = '__INDIVIDUAL_ONE_VERSION_' + moduleName;
-    var enforceKey = key + '_ENFORCE_SINGLETON';
-
-    var versionValue = Individual(enforceKey, version);
-
-    if (versionValue !== version) {
-        throw new Error('Can only have one copy of ' +
-            moduleName + '.\n' +
-            'You already have version ' + versionValue +
-            ' installed.\n' +
-            'This means you cannot install version ' + version);
-    }
-
-    return Individual(key, defaultValue);
-}
-
-},{"./index.js":32}],34:[function(require,module,exports){
-"use strict";
-
-module.exports = function isObject(x) {
-	return typeof x === "object" && x !== null;
-};
-
-},{}],35:[function(require,module,exports){
+},{"./round-coord":17,"@turf/explode":4,"@turf/helpers":6}],19:[function(require,module,exports){
 (function (global){
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(_dereq_,module,exports){
 function corslite(url, callback, cors) {
@@ -24176,7 +23544,7 @@ module.exports = L.Routing = {
 },{}]},{},[53]);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],36:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 
 
 
@@ -24293,7 +23661,7 @@ L.Icon.Glyph.prototype.options.iconUrl = 'data:image/png;base64,iVBORw0KGgoAAAAN
 
 
 
-},{}],37:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 /* @preserve
  * Leaflet 1.3.4, a JS library for interactive maps. http://leafletjs.com
  * (c) 2010-2018 Vladimir Agafonkin, (c) 2010-2011 CloudMade
@@ -38165,247 +37533,7 @@ window.L = exports;
 })));
 
 
-},{}],38:[function(require,module,exports){
-var raf = require("raf")
-var TypedError = require("error/typed")
-
-var InvalidUpdateInRender = TypedError({
-    type: "main-loop.invalid.update.in-render",
-    message: "main-loop: Unexpected update occurred in loop.\n" +
-        "We are currently rendering a view, " +
-            "you can't change state right now.\n" +
-        "The diff is: {stringDiff}.\n" +
-        "SUGGESTED FIX: find the state mutation in your view " +
-            "or rendering function and remove it.\n" +
-        "The view should not have any side effects.\n" +
-        "This may also have happened if rendering did not complete due to an error.\n",
-    diff: null,
-    stringDiff: null
-})
-
-module.exports = main
-
-function main(initialState, view, opts) {
-    opts = opts || {}
-
-    var currentState = initialState
-    var create = opts.create
-    var diff = opts.diff
-    var patch = opts.patch
-    var redrawScheduled = false
-
-    var tree = opts.initialTree || view(currentState, 0);
-    var target = opts.target || create(tree, opts)
-    var inRenderingTransaction = false
-
-    currentState = null
-
-    var loop = {
-        state: initialState,
-        target: target,
-        update: update
-    }
-    return loop
-
-    function update(state) {
-        if (inRenderingTransaction) {
-            throw InvalidUpdateInRender({
-                diff: state._diff,
-                stringDiff: JSON.stringify(state._diff)
-            })
-        }
-
-        if (currentState === null && !redrawScheduled) {
-            redrawScheduled = true
-            raf(redraw)
-        }
-
-        currentState = state
-        loop.state = state
-    }
-
-    function redraw(time) {
-        redrawScheduled = false
-        if (currentState === null) {
-            return
-        }
-
-        inRenderingTransaction = true
-        var newTree = view(currentState, time)
-
-        if (opts.createOnly) {
-            inRenderingTransaction = false
-            create(newTree, opts)
-        } else {
-            var patches = diff(tree, newTree, opts)
-            inRenderingTransaction = false
-            target = patch(target, patches, opts)
-        }
-
-        tree = newTree
-        currentState = null
-    }
-}
-
-},{"error/typed":18,"raf":40}],39:[function(require,module,exports){
-(function (process){
-// Generated by CoffeeScript 1.6.3
-(function() {
-  var getNanoSeconds, hrtime, loadTime;
-
-  if ((typeof performance !== "undefined" && performance !== null) && performance.now) {
-    module.exports = function() {
-      return performance.now();
-    };
-  } else if ((typeof process !== "undefined" && process !== null) && process.hrtime) {
-    module.exports = function() {
-      return (getNanoSeconds() - loadTime) / 1e6;
-    };
-    hrtime = process.hrtime;
-    getNanoSeconds = function() {
-      var hr;
-      hr = hrtime();
-      return hr[0] * 1e9 + hr[1];
-    };
-    loadTime = getNanoSeconds();
-  } else if (Date.now) {
-    module.exports = function() {
-      return Date.now() - loadTime;
-    };
-    loadTime = Date.now();
-  } else {
-    module.exports = function() {
-      return new Date().getTime() - loadTime;
-    };
-    loadTime = new Date().getTime();
-  }
-
-}).call(this);
-
-/*
-
-*/
-
-}).call(this,require('_process'))
-},{"_process":15}],40:[function(require,module,exports){
-var now = require('performance-now')
-  , global = typeof window === 'undefined' ? {} : window
-  , vendors = ['moz', 'webkit']
-  , suffix = 'AnimationFrame'
-  , raf = global['request' + suffix]
-  , caf = global['cancel' + suffix] || global['cancelRequest' + suffix]
-  , isNative = true
-
-for(var i = 0; i < vendors.length && !raf; i++) {
-  raf = global[vendors[i] + 'Request' + suffix]
-  caf = global[vendors[i] + 'Cancel' + suffix]
-      || global[vendors[i] + 'CancelRequest' + suffix]
-}
-
-// Some versions of FF have rAF but not cAF
-if(!raf || !caf) {
-  isNative = false
-
-  var last = 0
-    , id = 0
-    , queue = []
-    , frameDuration = 1000 / 60
-
-  raf = function(callback) {
-    if(queue.length === 0) {
-      var _now = now()
-        , next = Math.max(0, frameDuration - (_now - last))
-      last = next + _now
-      setTimeout(function() {
-        var cp = queue.slice(0)
-        // Clear queue here to prevent
-        // callbacks from appending listeners
-        // to the current frame's queue
-        queue.length = 0
-        for(var i = 0; i < cp.length; i++) {
-          if(!cp[i].cancelled) {
-            try{
-              cp[i].callback(last)
-            } catch(e) {
-              setTimeout(function() { throw e }, 0)
-            }
-          }
-        }
-      }, Math.round(next))
-    }
-    queue.push({
-      handle: ++id,
-      callback: callback,
-      cancelled: false
-    })
-    return id
-  }
-
-  caf = function(handle) {
-    for(var i = 0; i < queue.length; i++) {
-      if(queue[i].handle === handle) {
-        queue[i].cancelled = true
-      }
-    }
-  }
-}
-
-module.exports = function(fn) {
-  // Wrap in a new function to prevent
-  // `cancel` potentially being assigned
-  // to the native rAF function
-  if(!isNative) {
-    return raf.call(global, fn)
-  }
-  return raf.call(global, function() {
-    try{
-      fn.apply(this, arguments)
-    } catch(e) {
-      setTimeout(function() { throw e }, 0)
-    }
-  })
-}
-module.exports.cancel = function() {
-  caf.apply(global, arguments)
-}
-
-},{"performance-now":39}],41:[function(require,module,exports){
-var nargs = /\{([0-9a-zA-Z]+)\}/g
-var slice = Array.prototype.slice
-
-module.exports = template
-
-function template(string) {
-    var args
-
-    if (arguments.length === 2 && typeof arguments[1] === "object") {
-        args = arguments[1]
-    } else {
-        args = slice.call(arguments, 1)
-    }
-
-    if (!args || !args.hasOwnProperty) {
-        args = {}
-    }
-
-    return string.replace(nargs, function replaceArg(match, i, index) {
-        var result
-
-        if (string[index - 1] === "{" &&
-            string[index + match.length] === "}") {
-            return i
-        } else {
-            result = args.hasOwnProperty(i) ? args[i] : null
-            if (result === null || result === undefined) {
-                return ""
-            }
-
-            return result
-        }
-    })
-}
-
-},{}],42:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 (function (global, factory) {
 typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
 typeof define === 'function' && define.amd ? define(factory) :
@@ -38500,7 +37628,7 @@ return TinyQueue;
 
 }));
 
-},{}],43:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 var invariant = require('turf-invariant');
 //http://en.wikipedia.org/wiki/Haversine_formula
 //http://www.movable-type.co.uk/scripts/latlong.html
@@ -38592,7 +37720,7 @@ function toRad(degree) {
   return degree * Math.PI / 180;
 }
 
-},{"turf-invariant":46}],44:[function(require,module,exports){
+},{"turf-invariant":26}],24:[function(require,module,exports){
 var each = require('turf-meta').coordEach;
 
 /**
@@ -38662,7 +37790,7 @@ module.exports = function(layer) {
     return extent;
 };
 
-},{"turf-meta":47}],45:[function(require,module,exports){
+},{"turf-meta":27}],25:[function(require,module,exports){
 /**
  * Takes one or more {@link Feature|Features} and creates a {@link FeatureCollection}
  *
@@ -38688,7 +37816,7 @@ module.exports = function(features){
   };
 };
 
-},{}],46:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 module.exports.geojsonType = geojsonType;
 module.exports.collectionOf = collectionOf;
 module.exports.featureOf = featureOf;
@@ -38756,7 +37884,7 @@ function collectionOf(value, type, name) {
     }
 }
 
-},{}],47:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 /**
  * Lazily iterate over coordinates in any GeoJSON object, similar to
  * Array.forEach.
@@ -38896,7 +38024,7 @@ function propReduce(layer, callback, memo) {
 }
 module.exports.propReduce = propReduce;
 
-},{}],48:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 var distance = require('turf-distance');
 
 /**
@@ -38979,1884 +38107,7 @@ module.exports = function(targetPoint, points){
   return nearestPoint;
 }
 
-},{"turf-distance":43}],49:[function(require,module,exports){
-var createElement = require("./vdom/create-element.js")
-
-module.exports = createElement
-
-},{"./vdom/create-element.js":55}],50:[function(require,module,exports){
-var diff = require("./vtree/diff.js")
-
-module.exports = diff
-
-},{"./vtree/diff.js":78}],51:[function(require,module,exports){
-var h = require("./virtual-hyperscript/index.js")
-
-module.exports = h
-
-},{"./virtual-hyperscript/index.js":63}],52:[function(require,module,exports){
-var diff = require("./diff.js")
-var patch = require("./patch.js")
-var h = require("./h.js")
-var create = require("./create-element.js")
-var VNode = require('./vnode/vnode.js')
-var VText = require('./vnode/vtext.js')
-
-module.exports = {
-    diff: diff,
-    patch: patch,
-    h: h,
-    create: create,
-    VNode: VNode,
-    VText: VText
-}
-
-},{"./create-element.js":49,"./diff.js":50,"./h.js":51,"./patch.js":53,"./vnode/vnode.js":74,"./vnode/vtext.js":76}],53:[function(require,module,exports){
-var patch = require("./vdom/patch.js")
-
-module.exports = patch
-
-},{"./vdom/patch.js":58}],54:[function(require,module,exports){
-var isObject = require("is-object")
-var isHook = require("../vnode/is-vhook.js")
-
-module.exports = applyProperties
-
-function applyProperties(node, props, previous) {
-    for (var propName in props) {
-        var propValue = props[propName]
-
-        if (propValue === undefined) {
-            removeProperty(node, propName, propValue, previous);
-        } else if (isHook(propValue)) {
-            removeProperty(node, propName, propValue, previous)
-            if (propValue.hook) {
-                propValue.hook(node,
-                    propName,
-                    previous ? previous[propName] : undefined)
-            }
-        } else {
-            if (isObject(propValue)) {
-                patchObject(node, props, previous, propName, propValue);
-            } else {
-                node[propName] = propValue
-            }
-        }
-    }
-}
-
-function removeProperty(node, propName, propValue, previous) {
-    if (previous) {
-        var previousValue = previous[propName]
-
-        if (!isHook(previousValue)) {
-            if (propName === "attributes") {
-                for (var attrName in previousValue) {
-                    node.removeAttribute(attrName)
-                }
-            } else if (propName === "style") {
-                for (var i in previousValue) {
-                    node.style[i] = ""
-                }
-            } else if (typeof previousValue === "string") {
-                node[propName] = ""
-            } else {
-                node[propName] = null
-            }
-        } else if (previousValue.unhook) {
-            previousValue.unhook(node, propName, propValue)
-        }
-    }
-}
-
-function patchObject(node, props, previous, propName, propValue) {
-    var previousValue = previous ? previous[propName] : undefined
-
-    // Set attributes
-    if (propName === "attributes") {
-        for (var attrName in propValue) {
-            var attrValue = propValue[attrName]
-
-            if (attrValue === undefined) {
-                node.removeAttribute(attrName)
-            } else {
-                node.setAttribute(attrName, attrValue)
-            }
-        }
-
-        return
-    }
-
-    if(previousValue && isObject(previousValue) &&
-        getPrototype(previousValue) !== getPrototype(propValue)) {
-        node[propName] = propValue
-        return
-    }
-
-    if (!isObject(node[propName])) {
-        node[propName] = {}
-    }
-
-    var replacer = propName === "style" ? "" : undefined
-
-    for (var k in propValue) {
-        var value = propValue[k]
-        node[propName][k] = (value === undefined) ? replacer : value
-    }
-}
-
-function getPrototype(value) {
-    if (Object.getPrototypeOf) {
-        return Object.getPrototypeOf(value)
-    } else if (value.__proto__) {
-        return value.__proto__
-    } else if (value.constructor) {
-        return value.constructor.prototype
-    }
-}
-
-},{"../vnode/is-vhook.js":69,"is-object":34}],55:[function(require,module,exports){
-var document = require("global/document")
-
-var applyProperties = require("./apply-properties")
-
-var isVNode = require("../vnode/is-vnode.js")
-var isVText = require("../vnode/is-vtext.js")
-var isWidget = require("../vnode/is-widget.js")
-var handleThunk = require("../vnode/handle-thunk.js")
-
-module.exports = createElement
-
-function createElement(vnode, opts) {
-    var doc = opts ? opts.document || document : document
-    var warn = opts ? opts.warn : null
-
-    vnode = handleThunk(vnode).a
-
-    if (isWidget(vnode)) {
-        return vnode.init()
-    } else if (isVText(vnode)) {
-        return doc.createTextNode(vnode.text)
-    } else if (!isVNode(vnode)) {
-        if (warn) {
-            warn("Item is not a valid virtual dom node", vnode)
-        }
-        return null
-    }
-
-    var node = (vnode.namespace === null) ?
-        doc.createElement(vnode.tagName) :
-        doc.createElementNS(vnode.namespace, vnode.tagName)
-
-    var props = vnode.properties
-    applyProperties(node, props)
-
-    var children = vnode.children
-
-    for (var i = 0; i < children.length; i++) {
-        var childNode = createElement(children[i], opts)
-        if (childNode) {
-            node.appendChild(childNode)
-        }
-    }
-
-    return node
-}
-
-},{"../vnode/handle-thunk.js":67,"../vnode/is-vnode.js":70,"../vnode/is-vtext.js":71,"../vnode/is-widget.js":72,"./apply-properties":54,"global/document":31}],56:[function(require,module,exports){
-// Maps a virtual DOM tree onto a real DOM tree in an efficient manner.
-// We don't want to read all of the DOM nodes in the tree so we use
-// the in-order tree indexing to eliminate recursion down certain branches.
-// We only recurse into a DOM node if we know that it contains a child of
-// interest.
-
-var noChild = {}
-
-module.exports = domIndex
-
-function domIndex(rootNode, tree, indices, nodes) {
-    if (!indices || indices.length === 0) {
-        return {}
-    } else {
-        indices.sort(ascending)
-        return recurse(rootNode, tree, indices, nodes, 0)
-    }
-}
-
-function recurse(rootNode, tree, indices, nodes, rootIndex) {
-    nodes = nodes || {}
-
-
-    if (rootNode) {
-        if (indexInRange(indices, rootIndex, rootIndex)) {
-            nodes[rootIndex] = rootNode
-        }
-
-        var vChildren = tree.children
-
-        if (vChildren) {
-
-            var childNodes = rootNode.childNodes
-
-            for (var i = 0; i < tree.children.length; i++) {
-                rootIndex += 1
-
-                var vChild = vChildren[i] || noChild
-                var nextIndex = rootIndex + (vChild.count || 0)
-
-                // skip recursion down the tree if there are no nodes down here
-                if (indexInRange(indices, rootIndex, nextIndex)) {
-                    recurse(childNodes[i], vChild, indices, nodes, rootIndex)
-                }
-
-                rootIndex = nextIndex
-            }
-        }
-    }
-
-    return nodes
-}
-
-// Binary search for an index in the interval [left, right]
-function indexInRange(indices, left, right) {
-    if (indices.length === 0) {
-        return false
-    }
-
-    var minIndex = 0
-    var maxIndex = indices.length - 1
-    var currentIndex
-    var currentItem
-
-    while (minIndex <= maxIndex) {
-        currentIndex = ((maxIndex + minIndex) / 2) >> 0
-        currentItem = indices[currentIndex]
-
-        if (minIndex === maxIndex) {
-            return currentItem >= left && currentItem <= right
-        } else if (currentItem < left) {
-            minIndex = currentIndex + 1
-        } else  if (currentItem > right) {
-            maxIndex = currentIndex - 1
-        } else {
-            return true
-        }
-    }
-
-    return false;
-}
-
-function ascending(a, b) {
-    return a > b ? 1 : -1
-}
-
-},{}],57:[function(require,module,exports){
-var applyProperties = require("./apply-properties")
-
-var isWidget = require("../vnode/is-widget.js")
-var VPatch = require("../vnode/vpatch.js")
-
-var updateWidget = require("./update-widget")
-
-module.exports = applyPatch
-
-function applyPatch(vpatch, domNode, renderOptions) {
-    var type = vpatch.type
-    var vNode = vpatch.vNode
-    var patch = vpatch.patch
-
-    switch (type) {
-        case VPatch.REMOVE:
-            return removeNode(domNode, vNode)
-        case VPatch.INSERT:
-            return insertNode(domNode, patch, renderOptions)
-        case VPatch.VTEXT:
-            return stringPatch(domNode, vNode, patch, renderOptions)
-        case VPatch.WIDGET:
-            return widgetPatch(domNode, vNode, patch, renderOptions)
-        case VPatch.VNODE:
-            return vNodePatch(domNode, vNode, patch, renderOptions)
-        case VPatch.ORDER:
-            reorderChildren(domNode, patch)
-            return domNode
-        case VPatch.PROPS:
-            applyProperties(domNode, patch, vNode.properties)
-            return domNode
-        case VPatch.THUNK:
-            return replaceRoot(domNode,
-                renderOptions.patch(domNode, patch, renderOptions))
-        default:
-            return domNode
-    }
-}
-
-function removeNode(domNode, vNode) {
-    var parentNode = domNode.parentNode
-
-    if (parentNode) {
-        parentNode.removeChild(domNode)
-    }
-
-    destroyWidget(domNode, vNode);
-
-    return null
-}
-
-function insertNode(parentNode, vNode, renderOptions) {
-    var newNode = renderOptions.render(vNode, renderOptions)
-
-    if (parentNode) {
-        parentNode.appendChild(newNode)
-    }
-
-    return parentNode
-}
-
-function stringPatch(domNode, leftVNode, vText, renderOptions) {
-    var newNode
-
-    if (domNode.nodeType === 3) {
-        domNode.replaceData(0, domNode.length, vText.text)
-        newNode = domNode
-    } else {
-        var parentNode = domNode.parentNode
-        newNode = renderOptions.render(vText, renderOptions)
-
-        if (parentNode && newNode !== domNode) {
-            parentNode.replaceChild(newNode, domNode)
-        }
-    }
-
-    return newNode
-}
-
-function widgetPatch(domNode, leftVNode, widget, renderOptions) {
-    var updating = updateWidget(leftVNode, widget)
-    var newNode
-
-    if (updating) {
-        newNode = widget.update(leftVNode, domNode) || domNode
-    } else {
-        newNode = renderOptions.render(widget, renderOptions)
-    }
-
-    var parentNode = domNode.parentNode
-
-    if (parentNode && newNode !== domNode) {
-        parentNode.replaceChild(newNode, domNode)
-    }
-
-    if (!updating) {
-        destroyWidget(domNode, leftVNode)
-    }
-
-    return newNode
-}
-
-function vNodePatch(domNode, leftVNode, vNode, renderOptions) {
-    var parentNode = domNode.parentNode
-    var newNode = renderOptions.render(vNode, renderOptions)
-
-    if (parentNode && newNode !== domNode) {
-        parentNode.replaceChild(newNode, domNode)
-    }
-
-    return newNode
-}
-
-function destroyWidget(domNode, w) {
-    if (typeof w.destroy === "function" && isWidget(w)) {
-        w.destroy(domNode)
-    }
-}
-
-function reorderChildren(domNode, moves) {
-    var childNodes = domNode.childNodes
-    var keyMap = {}
-    var node
-    var remove
-    var insert
-
-    for (var i = 0; i < moves.removes.length; i++) {
-        remove = moves.removes[i]
-        node = childNodes[remove.from]
-        if (remove.key) {
-            keyMap[remove.key] = node
-        }
-        domNode.removeChild(node)
-    }
-
-    var length = childNodes.length
-    for (var j = 0; j < moves.inserts.length; j++) {
-        insert = moves.inserts[j]
-        node = keyMap[insert.key]
-        // this is the weirdest bug i've ever seen in webkit
-        domNode.insertBefore(node, insert.to >= length++ ? null : childNodes[insert.to])
-    }
-}
-
-function replaceRoot(oldRoot, newRoot) {
-    if (oldRoot && newRoot && oldRoot !== newRoot && oldRoot.parentNode) {
-        oldRoot.parentNode.replaceChild(newRoot, oldRoot)
-    }
-
-    return newRoot;
-}
-
-},{"../vnode/is-widget.js":72,"../vnode/vpatch.js":75,"./apply-properties":54,"./update-widget":59}],58:[function(require,module,exports){
-var document = require("global/document")
-var isArray = require("x-is-array")
-
-var render = require("./create-element")
-var domIndex = require("./dom-index")
-var patchOp = require("./patch-op")
-module.exports = patch
-
-function patch(rootNode, patches, renderOptions) {
-    renderOptions = renderOptions || {}
-    renderOptions.patch = renderOptions.patch && renderOptions.patch !== patch
-        ? renderOptions.patch
-        : patchRecursive
-    renderOptions.render = renderOptions.render || render
-
-    return renderOptions.patch(rootNode, patches, renderOptions)
-}
-
-function patchRecursive(rootNode, patches, renderOptions) {
-    var indices = patchIndices(patches)
-
-    if (indices.length === 0) {
-        return rootNode
-    }
-
-    var index = domIndex(rootNode, patches.a, indices)
-    var ownerDocument = rootNode.ownerDocument
-
-    if (!renderOptions.document && ownerDocument !== document) {
-        renderOptions.document = ownerDocument
-    }
-
-    for (var i = 0; i < indices.length; i++) {
-        var nodeIndex = indices[i]
-        rootNode = applyPatch(rootNode,
-            index[nodeIndex],
-            patches[nodeIndex],
-            renderOptions)
-    }
-
-    return rootNode
-}
-
-function applyPatch(rootNode, domNode, patchList, renderOptions) {
-    if (!domNode) {
-        return rootNode
-    }
-
-    var newNode
-
-    if (isArray(patchList)) {
-        for (var i = 0; i < patchList.length; i++) {
-            newNode = patchOp(patchList[i], domNode, renderOptions)
-
-            if (domNode === rootNode) {
-                rootNode = newNode
-            }
-        }
-    } else {
-        newNode = patchOp(patchList, domNode, renderOptions)
-
-        if (domNode === rootNode) {
-            rootNode = newNode
-        }
-    }
-
-    return rootNode
-}
-
-function patchIndices(patches) {
-    var indices = []
-
-    for (var key in patches) {
-        if (key !== "a") {
-            indices.push(Number(key))
-        }
-    }
-
-    return indices
-}
-
-},{"./create-element":55,"./dom-index":56,"./patch-op":57,"global/document":31,"x-is-array":79}],59:[function(require,module,exports){
-var isWidget = require("../vnode/is-widget.js")
-
-module.exports = updateWidget
-
-function updateWidget(a, b) {
-    if (isWidget(a) && isWidget(b)) {
-        if ("name" in a && "name" in b) {
-            return a.id === b.id
-        } else {
-            return a.init === b.init
-        }
-    }
-
-    return false
-}
-
-},{"../vnode/is-widget.js":72}],60:[function(require,module,exports){
-'use strict';
-
-module.exports = AttributeHook;
-
-function AttributeHook(namespace, value) {
-    if (!(this instanceof AttributeHook)) {
-        return new AttributeHook(namespace, value);
-    }
-
-    this.namespace = namespace;
-    this.value = value;
-}
-
-AttributeHook.prototype.hook = function (node, prop, prev) {
-    if (prev && prev.type === 'AttributeHook' &&
-        prev.value === this.value &&
-        prev.namespace === this.namespace) {
-        return;
-    }
-
-    node.setAttributeNS(this.namespace, prop, this.value);
-};
-
-AttributeHook.prototype.unhook = function (node, prop, next) {
-    if (next && next.type === 'AttributeHook' &&
-        next.namespace === this.namespace) {
-        return;
-    }
-
-    var colonPosition = prop.indexOf(':');
-    var localName = colonPosition > -1 ? prop.substr(colonPosition + 1) : prop;
-    node.removeAttributeNS(this.namespace, localName);
-};
-
-AttributeHook.prototype.type = 'AttributeHook';
-
-},{}],61:[function(require,module,exports){
-'use strict';
-
-var EvStore = require('ev-store');
-
-module.exports = EvHook;
-
-function EvHook(value) {
-    if (!(this instanceof EvHook)) {
-        return new EvHook(value);
-    }
-
-    this.value = value;
-}
-
-EvHook.prototype.hook = function (node, propertyName) {
-    var es = EvStore(node);
-    var propName = propertyName.substr(3);
-
-    es[propName] = this.value;
-};
-
-EvHook.prototype.unhook = function(node, propertyName) {
-    var es = EvStore(node);
-    var propName = propertyName.substr(3);
-
-    es[propName] = undefined;
-};
-
-},{"ev-store":19}],62:[function(require,module,exports){
-'use strict';
-
-module.exports = SoftSetHook;
-
-function SoftSetHook(value) {
-    if (!(this instanceof SoftSetHook)) {
-        return new SoftSetHook(value);
-    }
-
-    this.value = value;
-}
-
-SoftSetHook.prototype.hook = function (node, propertyName) {
-    if (node[propertyName] !== this.value) {
-        node[propertyName] = this.value;
-    }
-};
-
-},{}],63:[function(require,module,exports){
-'use strict';
-
-var isArray = require('x-is-array');
-
-var VNode = require('../vnode/vnode.js');
-var VText = require('../vnode/vtext.js');
-var isVNode = require('../vnode/is-vnode');
-var isVText = require('../vnode/is-vtext');
-var isWidget = require('../vnode/is-widget');
-var isHook = require('../vnode/is-vhook');
-var isVThunk = require('../vnode/is-thunk');
-
-var parseTag = require('./parse-tag.js');
-var softSetHook = require('./hooks/soft-set-hook.js');
-var evHook = require('./hooks/ev-hook.js');
-
-module.exports = h;
-
-function h(tagName, properties, children) {
-    var childNodes = [];
-    var tag, props, key, namespace;
-
-    if (!children && isChildren(properties)) {
-        children = properties;
-        props = {};
-    }
-
-    props = props || properties || {};
-    tag = parseTag(tagName, props);
-
-    // support keys
-    if (props.hasOwnProperty('key')) {
-        key = props.key;
-        props.key = undefined;
-    }
-
-    // support namespace
-    if (props.hasOwnProperty('namespace')) {
-        namespace = props.namespace;
-        props.namespace = undefined;
-    }
-
-    // fix cursor bug
-    if (tag === 'INPUT' &&
-        !namespace &&
-        props.hasOwnProperty('value') &&
-        props.value !== undefined &&
-        !isHook(props.value)
-    ) {
-        props.value = softSetHook(props.value);
-    }
-
-    transformProperties(props);
-
-    if (children !== undefined && children !== null) {
-        addChild(children, childNodes, tag, props);
-    }
-
-
-    return new VNode(tag, props, childNodes, key, namespace);
-}
-
-function addChild(c, childNodes, tag, props) {
-    if (typeof c === 'string') {
-        childNodes.push(new VText(c));
-    } else if (typeof c === 'number') {
-        childNodes.push(new VText(String(c)));
-    } else if (isChild(c)) {
-        childNodes.push(c);
-    } else if (isArray(c)) {
-        for (var i = 0; i < c.length; i++) {
-            addChild(c[i], childNodes, tag, props);
-        }
-    } else if (c === null || c === undefined) {
-        return;
-    } else {
-        throw UnexpectedVirtualElement({
-            foreignObject: c,
-            parentVnode: {
-                tagName: tag,
-                properties: props
-            }
-        });
-    }
-}
-
-function transformProperties(props) {
-    for (var propName in props) {
-        if (props.hasOwnProperty(propName)) {
-            var value = props[propName];
-
-            if (isHook(value)) {
-                continue;
-            }
-
-            if (propName.substr(0, 3) === 'ev-') {
-                // add ev-foo support
-                props[propName] = evHook(value);
-            }
-        }
-    }
-}
-
-function isChild(x) {
-    return isVNode(x) || isVText(x) || isWidget(x) || isVThunk(x);
-}
-
-function isChildren(x) {
-    return typeof x === 'string' || isArray(x) || isChild(x);
-}
-
-function UnexpectedVirtualElement(data) {
-    var err = new Error();
-
-    err.type = 'virtual-hyperscript.unexpected.virtual-element';
-    err.message = 'Unexpected virtual child passed to h().\n' +
-        'Expected a VNode / Vthunk / VWidget / string but:\n' +
-        'got:\n' +
-        errorString(data.foreignObject) +
-        '.\n' +
-        'The parent vnode is:\n' +
-        errorString(data.parentVnode)
-        '\n' +
-        'Suggested fix: change your `h(..., [ ... ])` callsite.';
-    err.foreignObject = data.foreignObject;
-    err.parentVnode = data.parentVnode;
-
-    return err;
-}
-
-function errorString(obj) {
-    try {
-        return JSON.stringify(obj, null, '    ');
-    } catch (e) {
-        return String(obj);
-    }
-}
-
-},{"../vnode/is-thunk":68,"../vnode/is-vhook":69,"../vnode/is-vnode":70,"../vnode/is-vtext":71,"../vnode/is-widget":72,"../vnode/vnode.js":74,"../vnode/vtext.js":76,"./hooks/ev-hook.js":61,"./hooks/soft-set-hook.js":62,"./parse-tag.js":64,"x-is-array":79}],64:[function(require,module,exports){
-'use strict';
-
-var split = require('browser-split');
-
-var classIdSplit = /([\.#]?[a-zA-Z0-9\u007F-\uFFFF_:-]+)/;
-var notClassId = /^\.|#/;
-
-module.exports = parseTag;
-
-function parseTag(tag, props) {
-    if (!tag) {
-        return 'DIV';
-    }
-
-    var noId = !(props.hasOwnProperty('id'));
-
-    var tagParts = split(tag, classIdSplit);
-    var tagName = null;
-
-    if (notClassId.test(tagParts[1])) {
-        tagName = 'DIV';
-    }
-
-    var classes, part, type, i;
-
-    for (i = 0; i < tagParts.length; i++) {
-        part = tagParts[i];
-
-        if (!part) {
-            continue;
-        }
-
-        type = part.charAt(0);
-
-        if (!tagName) {
-            tagName = part;
-        } else if (type === '.') {
-            classes = classes || [];
-            classes.push(part.substring(1, part.length));
-        } else if (type === '#' && noId) {
-            props.id = part.substring(1, part.length);
-        }
-    }
-
-    if (classes) {
-        if (props.className) {
-            classes.push(props.className);
-        }
-
-        props.className = classes.join(' ');
-    }
-
-    return props.namespace ? tagName : tagName.toUpperCase();
-}
-
-},{"browser-split":14}],65:[function(require,module,exports){
-'use strict';
-
-var DEFAULT_NAMESPACE = null;
-var EV_NAMESPACE = 'http://www.w3.org/2001/xml-events';
-var XLINK_NAMESPACE = 'http://www.w3.org/1999/xlink';
-var XML_NAMESPACE = 'http://www.w3.org/XML/1998/namespace';
-
-// http://www.w3.org/TR/SVGTiny12/attributeTable.html
-// http://www.w3.org/TR/SVG/attindex.html
-var SVG_PROPERTIES = {
-    'about': DEFAULT_NAMESPACE,
-    'accent-height': DEFAULT_NAMESPACE,
-    'accumulate': DEFAULT_NAMESPACE,
-    'additive': DEFAULT_NAMESPACE,
-    'alignment-baseline': DEFAULT_NAMESPACE,
-    'alphabetic': DEFAULT_NAMESPACE,
-    'amplitude': DEFAULT_NAMESPACE,
-    'arabic-form': DEFAULT_NAMESPACE,
-    'ascent': DEFAULT_NAMESPACE,
-    'attributeName': DEFAULT_NAMESPACE,
-    'attributeType': DEFAULT_NAMESPACE,
-    'azimuth': DEFAULT_NAMESPACE,
-    'bandwidth': DEFAULT_NAMESPACE,
-    'baseFrequency': DEFAULT_NAMESPACE,
-    'baseProfile': DEFAULT_NAMESPACE,
-    'baseline-shift': DEFAULT_NAMESPACE,
-    'bbox': DEFAULT_NAMESPACE,
-    'begin': DEFAULT_NAMESPACE,
-    'bias': DEFAULT_NAMESPACE,
-    'by': DEFAULT_NAMESPACE,
-    'calcMode': DEFAULT_NAMESPACE,
-    'cap-height': DEFAULT_NAMESPACE,
-    'class': DEFAULT_NAMESPACE,
-    'clip': DEFAULT_NAMESPACE,
-    'clip-path': DEFAULT_NAMESPACE,
-    'clip-rule': DEFAULT_NAMESPACE,
-    'clipPathUnits': DEFAULT_NAMESPACE,
-    'color': DEFAULT_NAMESPACE,
-    'color-interpolation': DEFAULT_NAMESPACE,
-    'color-interpolation-filters': DEFAULT_NAMESPACE,
-    'color-profile': DEFAULT_NAMESPACE,
-    'color-rendering': DEFAULT_NAMESPACE,
-    'content': DEFAULT_NAMESPACE,
-    'contentScriptType': DEFAULT_NAMESPACE,
-    'contentStyleType': DEFAULT_NAMESPACE,
-    'cursor': DEFAULT_NAMESPACE,
-    'cx': DEFAULT_NAMESPACE,
-    'cy': DEFAULT_NAMESPACE,
-    'd': DEFAULT_NAMESPACE,
-    'datatype': DEFAULT_NAMESPACE,
-    'defaultAction': DEFAULT_NAMESPACE,
-    'descent': DEFAULT_NAMESPACE,
-    'diffuseConstant': DEFAULT_NAMESPACE,
-    'direction': DEFAULT_NAMESPACE,
-    'display': DEFAULT_NAMESPACE,
-    'divisor': DEFAULT_NAMESPACE,
-    'dominant-baseline': DEFAULT_NAMESPACE,
-    'dur': DEFAULT_NAMESPACE,
-    'dx': DEFAULT_NAMESPACE,
-    'dy': DEFAULT_NAMESPACE,
-    'edgeMode': DEFAULT_NAMESPACE,
-    'editable': DEFAULT_NAMESPACE,
-    'elevation': DEFAULT_NAMESPACE,
-    'enable-background': DEFAULT_NAMESPACE,
-    'end': DEFAULT_NAMESPACE,
-    'ev:event': EV_NAMESPACE,
-    'event': DEFAULT_NAMESPACE,
-    'exponent': DEFAULT_NAMESPACE,
-    'externalResourcesRequired': DEFAULT_NAMESPACE,
-    'fill': DEFAULT_NAMESPACE,
-    'fill-opacity': DEFAULT_NAMESPACE,
-    'fill-rule': DEFAULT_NAMESPACE,
-    'filter': DEFAULT_NAMESPACE,
-    'filterRes': DEFAULT_NAMESPACE,
-    'filterUnits': DEFAULT_NAMESPACE,
-    'flood-color': DEFAULT_NAMESPACE,
-    'flood-opacity': DEFAULT_NAMESPACE,
-    'focusHighlight': DEFAULT_NAMESPACE,
-    'focusable': DEFAULT_NAMESPACE,
-    'font-family': DEFAULT_NAMESPACE,
-    'font-size': DEFAULT_NAMESPACE,
-    'font-size-adjust': DEFAULT_NAMESPACE,
-    'font-stretch': DEFAULT_NAMESPACE,
-    'font-style': DEFAULT_NAMESPACE,
-    'font-variant': DEFAULT_NAMESPACE,
-    'font-weight': DEFAULT_NAMESPACE,
-    'format': DEFAULT_NAMESPACE,
-    'from': DEFAULT_NAMESPACE,
-    'fx': DEFAULT_NAMESPACE,
-    'fy': DEFAULT_NAMESPACE,
-    'g1': DEFAULT_NAMESPACE,
-    'g2': DEFAULT_NAMESPACE,
-    'glyph-name': DEFAULT_NAMESPACE,
-    'glyph-orientation-horizontal': DEFAULT_NAMESPACE,
-    'glyph-orientation-vertical': DEFAULT_NAMESPACE,
-    'glyphRef': DEFAULT_NAMESPACE,
-    'gradientTransform': DEFAULT_NAMESPACE,
-    'gradientUnits': DEFAULT_NAMESPACE,
-    'handler': DEFAULT_NAMESPACE,
-    'hanging': DEFAULT_NAMESPACE,
-    'height': DEFAULT_NAMESPACE,
-    'horiz-adv-x': DEFAULT_NAMESPACE,
-    'horiz-origin-x': DEFAULT_NAMESPACE,
-    'horiz-origin-y': DEFAULT_NAMESPACE,
-    'id': DEFAULT_NAMESPACE,
-    'ideographic': DEFAULT_NAMESPACE,
-    'image-rendering': DEFAULT_NAMESPACE,
-    'in': DEFAULT_NAMESPACE,
-    'in2': DEFAULT_NAMESPACE,
-    'initialVisibility': DEFAULT_NAMESPACE,
-    'intercept': DEFAULT_NAMESPACE,
-    'k': DEFAULT_NAMESPACE,
-    'k1': DEFAULT_NAMESPACE,
-    'k2': DEFAULT_NAMESPACE,
-    'k3': DEFAULT_NAMESPACE,
-    'k4': DEFAULT_NAMESPACE,
-    'kernelMatrix': DEFAULT_NAMESPACE,
-    'kernelUnitLength': DEFAULT_NAMESPACE,
-    'kerning': DEFAULT_NAMESPACE,
-    'keyPoints': DEFAULT_NAMESPACE,
-    'keySplines': DEFAULT_NAMESPACE,
-    'keyTimes': DEFAULT_NAMESPACE,
-    'lang': DEFAULT_NAMESPACE,
-    'lengthAdjust': DEFAULT_NAMESPACE,
-    'letter-spacing': DEFAULT_NAMESPACE,
-    'lighting-color': DEFAULT_NAMESPACE,
-    'limitingConeAngle': DEFAULT_NAMESPACE,
-    'local': DEFAULT_NAMESPACE,
-    'marker-end': DEFAULT_NAMESPACE,
-    'marker-mid': DEFAULT_NAMESPACE,
-    'marker-start': DEFAULT_NAMESPACE,
-    'markerHeight': DEFAULT_NAMESPACE,
-    'markerUnits': DEFAULT_NAMESPACE,
-    'markerWidth': DEFAULT_NAMESPACE,
-    'mask': DEFAULT_NAMESPACE,
-    'maskContentUnits': DEFAULT_NAMESPACE,
-    'maskUnits': DEFAULT_NAMESPACE,
-    'mathematical': DEFAULT_NAMESPACE,
-    'max': DEFAULT_NAMESPACE,
-    'media': DEFAULT_NAMESPACE,
-    'mediaCharacterEncoding': DEFAULT_NAMESPACE,
-    'mediaContentEncodings': DEFAULT_NAMESPACE,
-    'mediaSize': DEFAULT_NAMESPACE,
-    'mediaTime': DEFAULT_NAMESPACE,
-    'method': DEFAULT_NAMESPACE,
-    'min': DEFAULT_NAMESPACE,
-    'mode': DEFAULT_NAMESPACE,
-    'name': DEFAULT_NAMESPACE,
-    'nav-down': DEFAULT_NAMESPACE,
-    'nav-down-left': DEFAULT_NAMESPACE,
-    'nav-down-right': DEFAULT_NAMESPACE,
-    'nav-left': DEFAULT_NAMESPACE,
-    'nav-next': DEFAULT_NAMESPACE,
-    'nav-prev': DEFAULT_NAMESPACE,
-    'nav-right': DEFAULT_NAMESPACE,
-    'nav-up': DEFAULT_NAMESPACE,
-    'nav-up-left': DEFAULT_NAMESPACE,
-    'nav-up-right': DEFAULT_NAMESPACE,
-    'numOctaves': DEFAULT_NAMESPACE,
-    'observer': DEFAULT_NAMESPACE,
-    'offset': DEFAULT_NAMESPACE,
-    'opacity': DEFAULT_NAMESPACE,
-    'operator': DEFAULT_NAMESPACE,
-    'order': DEFAULT_NAMESPACE,
-    'orient': DEFAULT_NAMESPACE,
-    'orientation': DEFAULT_NAMESPACE,
-    'origin': DEFAULT_NAMESPACE,
-    'overflow': DEFAULT_NAMESPACE,
-    'overlay': DEFAULT_NAMESPACE,
-    'overline-position': DEFAULT_NAMESPACE,
-    'overline-thickness': DEFAULT_NAMESPACE,
-    'panose-1': DEFAULT_NAMESPACE,
-    'path': DEFAULT_NAMESPACE,
-    'pathLength': DEFAULT_NAMESPACE,
-    'patternContentUnits': DEFAULT_NAMESPACE,
-    'patternTransform': DEFAULT_NAMESPACE,
-    'patternUnits': DEFAULT_NAMESPACE,
-    'phase': DEFAULT_NAMESPACE,
-    'playbackOrder': DEFAULT_NAMESPACE,
-    'pointer-events': DEFAULT_NAMESPACE,
-    'points': DEFAULT_NAMESPACE,
-    'pointsAtX': DEFAULT_NAMESPACE,
-    'pointsAtY': DEFAULT_NAMESPACE,
-    'pointsAtZ': DEFAULT_NAMESPACE,
-    'preserveAlpha': DEFAULT_NAMESPACE,
-    'preserveAspectRatio': DEFAULT_NAMESPACE,
-    'primitiveUnits': DEFAULT_NAMESPACE,
-    'propagate': DEFAULT_NAMESPACE,
-    'property': DEFAULT_NAMESPACE,
-    'r': DEFAULT_NAMESPACE,
-    'radius': DEFAULT_NAMESPACE,
-    'refX': DEFAULT_NAMESPACE,
-    'refY': DEFAULT_NAMESPACE,
-    'rel': DEFAULT_NAMESPACE,
-    'rendering-intent': DEFAULT_NAMESPACE,
-    'repeatCount': DEFAULT_NAMESPACE,
-    'repeatDur': DEFAULT_NAMESPACE,
-    'requiredExtensions': DEFAULT_NAMESPACE,
-    'requiredFeatures': DEFAULT_NAMESPACE,
-    'requiredFonts': DEFAULT_NAMESPACE,
-    'requiredFormats': DEFAULT_NAMESPACE,
-    'resource': DEFAULT_NAMESPACE,
-    'restart': DEFAULT_NAMESPACE,
-    'result': DEFAULT_NAMESPACE,
-    'rev': DEFAULT_NAMESPACE,
-    'role': DEFAULT_NAMESPACE,
-    'rotate': DEFAULT_NAMESPACE,
-    'rx': DEFAULT_NAMESPACE,
-    'ry': DEFAULT_NAMESPACE,
-    'scale': DEFAULT_NAMESPACE,
-    'seed': DEFAULT_NAMESPACE,
-    'shape-rendering': DEFAULT_NAMESPACE,
-    'slope': DEFAULT_NAMESPACE,
-    'snapshotTime': DEFAULT_NAMESPACE,
-    'spacing': DEFAULT_NAMESPACE,
-    'specularConstant': DEFAULT_NAMESPACE,
-    'specularExponent': DEFAULT_NAMESPACE,
-    'spreadMethod': DEFAULT_NAMESPACE,
-    'startOffset': DEFAULT_NAMESPACE,
-    'stdDeviation': DEFAULT_NAMESPACE,
-    'stemh': DEFAULT_NAMESPACE,
-    'stemv': DEFAULT_NAMESPACE,
-    'stitchTiles': DEFAULT_NAMESPACE,
-    'stop-color': DEFAULT_NAMESPACE,
-    'stop-opacity': DEFAULT_NAMESPACE,
-    'strikethrough-position': DEFAULT_NAMESPACE,
-    'strikethrough-thickness': DEFAULT_NAMESPACE,
-    'string': DEFAULT_NAMESPACE,
-    'stroke': DEFAULT_NAMESPACE,
-    'stroke-dasharray': DEFAULT_NAMESPACE,
-    'stroke-dashoffset': DEFAULT_NAMESPACE,
-    'stroke-linecap': DEFAULT_NAMESPACE,
-    'stroke-linejoin': DEFAULT_NAMESPACE,
-    'stroke-miterlimit': DEFAULT_NAMESPACE,
-    'stroke-opacity': DEFAULT_NAMESPACE,
-    'stroke-width': DEFAULT_NAMESPACE,
-    'surfaceScale': DEFAULT_NAMESPACE,
-    'syncBehavior': DEFAULT_NAMESPACE,
-    'syncBehaviorDefault': DEFAULT_NAMESPACE,
-    'syncMaster': DEFAULT_NAMESPACE,
-    'syncTolerance': DEFAULT_NAMESPACE,
-    'syncToleranceDefault': DEFAULT_NAMESPACE,
-    'systemLanguage': DEFAULT_NAMESPACE,
-    'tableValues': DEFAULT_NAMESPACE,
-    'target': DEFAULT_NAMESPACE,
-    'targetX': DEFAULT_NAMESPACE,
-    'targetY': DEFAULT_NAMESPACE,
-    'text-anchor': DEFAULT_NAMESPACE,
-    'text-decoration': DEFAULT_NAMESPACE,
-    'text-rendering': DEFAULT_NAMESPACE,
-    'textLength': DEFAULT_NAMESPACE,
-    'timelineBegin': DEFAULT_NAMESPACE,
-    'title': DEFAULT_NAMESPACE,
-    'to': DEFAULT_NAMESPACE,
-    'transform': DEFAULT_NAMESPACE,
-    'transformBehavior': DEFAULT_NAMESPACE,
-    'type': DEFAULT_NAMESPACE,
-    'typeof': DEFAULT_NAMESPACE,
-    'u1': DEFAULT_NAMESPACE,
-    'u2': DEFAULT_NAMESPACE,
-    'underline-position': DEFAULT_NAMESPACE,
-    'underline-thickness': DEFAULT_NAMESPACE,
-    'unicode': DEFAULT_NAMESPACE,
-    'unicode-bidi': DEFAULT_NAMESPACE,
-    'unicode-range': DEFAULT_NAMESPACE,
-    'units-per-em': DEFAULT_NAMESPACE,
-    'v-alphabetic': DEFAULT_NAMESPACE,
-    'v-hanging': DEFAULT_NAMESPACE,
-    'v-ideographic': DEFAULT_NAMESPACE,
-    'v-mathematical': DEFAULT_NAMESPACE,
-    'values': DEFAULT_NAMESPACE,
-    'version': DEFAULT_NAMESPACE,
-    'vert-adv-y': DEFAULT_NAMESPACE,
-    'vert-origin-x': DEFAULT_NAMESPACE,
-    'vert-origin-y': DEFAULT_NAMESPACE,
-    'viewBox': DEFAULT_NAMESPACE,
-    'viewTarget': DEFAULT_NAMESPACE,
-    'visibility': DEFAULT_NAMESPACE,
-    'width': DEFAULT_NAMESPACE,
-    'widths': DEFAULT_NAMESPACE,
-    'word-spacing': DEFAULT_NAMESPACE,
-    'writing-mode': DEFAULT_NAMESPACE,
-    'x': DEFAULT_NAMESPACE,
-    'x-height': DEFAULT_NAMESPACE,
-    'x1': DEFAULT_NAMESPACE,
-    'x2': DEFAULT_NAMESPACE,
-    'xChannelSelector': DEFAULT_NAMESPACE,
-    'xlink:actuate': XLINK_NAMESPACE,
-    'xlink:arcrole': XLINK_NAMESPACE,
-    'xlink:href': XLINK_NAMESPACE,
-    'xlink:role': XLINK_NAMESPACE,
-    'xlink:show': XLINK_NAMESPACE,
-    'xlink:title': XLINK_NAMESPACE,
-    'xlink:type': XLINK_NAMESPACE,
-    'xml:base': XML_NAMESPACE,
-    'xml:id': XML_NAMESPACE,
-    'xml:lang': XML_NAMESPACE,
-    'xml:space': XML_NAMESPACE,
-    'y': DEFAULT_NAMESPACE,
-    'y1': DEFAULT_NAMESPACE,
-    'y2': DEFAULT_NAMESPACE,
-    'yChannelSelector': DEFAULT_NAMESPACE,
-    'z': DEFAULT_NAMESPACE,
-    'zoomAndPan': DEFAULT_NAMESPACE
-};
-
-module.exports = SVGAttributeNamespace;
-
-function SVGAttributeNamespace(value) {
-  if (SVG_PROPERTIES.hasOwnProperty(value)) {
-    return SVG_PROPERTIES[value];
-  }
-}
-
-},{}],66:[function(require,module,exports){
-'use strict';
-
-var isArray = require('x-is-array');
-
-var h = require('./index.js');
-
-
-var SVGAttributeNamespace = require('./svg-attribute-namespace');
-var attributeHook = require('./hooks/attribute-hook');
-
-var SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
-
-module.exports = svg;
-
-function svg(tagName, properties, children) {
-    if (!children && isChildren(properties)) {
-        children = properties;
-        properties = {};
-    }
-
-    properties = properties || {};
-
-    // set namespace for svg
-    properties.namespace = SVG_NAMESPACE;
-
-    var attributes = properties.attributes || (properties.attributes = {});
-
-    for (var key in properties) {
-        if (!properties.hasOwnProperty(key)) {
-            continue;
-        }
-
-        var namespace = SVGAttributeNamespace(key);
-
-        if (namespace === undefined) { // not a svg attribute
-            continue;
-        }
-
-        var value = properties[key];
-
-        if (typeof value !== 'string' &&
-            typeof value !== 'number' &&
-            typeof value !== 'boolean'
-        ) {
-            continue;
-        }
-
-        if (namespace !== null) { // namespaced attribute
-            properties[key] = attributeHook(namespace, value);
-            continue;
-        }
-
-        attributes[key] = value
-        properties[key] = undefined
-    }
-
-    return h(tagName, properties, children);
-}
-
-function isChildren(x) {
-    return typeof x === 'string' || isArray(x);
-}
-
-},{"./hooks/attribute-hook":60,"./index.js":63,"./svg-attribute-namespace":65,"x-is-array":79}],67:[function(require,module,exports){
-var isVNode = require("./is-vnode")
-var isVText = require("./is-vtext")
-var isWidget = require("./is-widget")
-var isThunk = require("./is-thunk")
-
-module.exports = handleThunk
-
-function handleThunk(a, b) {
-    var renderedA = a
-    var renderedB = b
-
-    if (isThunk(b)) {
-        renderedB = renderThunk(b, a)
-    }
-
-    if (isThunk(a)) {
-        renderedA = renderThunk(a, null)
-    }
-
-    return {
-        a: renderedA,
-        b: renderedB
-    }
-}
-
-function renderThunk(thunk, previous) {
-    var renderedThunk = thunk.vnode
-
-    if (!renderedThunk) {
-        renderedThunk = thunk.vnode = thunk.render(previous)
-    }
-
-    if (!(isVNode(renderedThunk) ||
-            isVText(renderedThunk) ||
-            isWidget(renderedThunk))) {
-        throw new Error("thunk did not return a valid node");
-    }
-
-    return renderedThunk
-}
-
-},{"./is-thunk":68,"./is-vnode":70,"./is-vtext":71,"./is-widget":72}],68:[function(require,module,exports){
-module.exports = isThunk
-
-function isThunk(t) {
-    return t && t.type === "Thunk"
-}
-
-},{}],69:[function(require,module,exports){
-module.exports = isHook
-
-function isHook(hook) {
-    return hook &&
-      (typeof hook.hook === "function" && !hook.hasOwnProperty("hook") ||
-       typeof hook.unhook === "function" && !hook.hasOwnProperty("unhook"))
-}
-
-},{}],70:[function(require,module,exports){
-var version = require("./version")
-
-module.exports = isVirtualNode
-
-function isVirtualNode(x) {
-    return x && x.type === "VirtualNode" && x.version === version
-}
-
-},{"./version":73}],71:[function(require,module,exports){
-var version = require("./version")
-
-module.exports = isVirtualText
-
-function isVirtualText(x) {
-    return x && x.type === "VirtualText" && x.version === version
-}
-
-},{"./version":73}],72:[function(require,module,exports){
-module.exports = isWidget
-
-function isWidget(w) {
-    return w && w.type === "Widget"
-}
-
-},{}],73:[function(require,module,exports){
-module.exports = "2"
-
-},{}],74:[function(require,module,exports){
-var version = require("./version")
-var isVNode = require("./is-vnode")
-var isWidget = require("./is-widget")
-var isThunk = require("./is-thunk")
-var isVHook = require("./is-vhook")
-
-module.exports = VirtualNode
-
-var noProperties = {}
-var noChildren = []
-
-function VirtualNode(tagName, properties, children, key, namespace) {
-    this.tagName = tagName
-    this.properties = properties || noProperties
-    this.children = children || noChildren
-    this.key = key != null ? String(key) : undefined
-    this.namespace = (typeof namespace === "string") ? namespace : null
-
-    var count = (children && children.length) || 0
-    var descendants = 0
-    var hasWidgets = false
-    var hasThunks = false
-    var descendantHooks = false
-    var hooks
-
-    for (var propName in properties) {
-        if (properties.hasOwnProperty(propName)) {
-            var property = properties[propName]
-            if (isVHook(property) && property.unhook) {
-                if (!hooks) {
-                    hooks = {}
-                }
-
-                hooks[propName] = property
-            }
-        }
-    }
-
-    for (var i = 0; i < count; i++) {
-        var child = children[i]
-        if (isVNode(child)) {
-            descendants += child.count || 0
-
-            if (!hasWidgets && child.hasWidgets) {
-                hasWidgets = true
-            }
-
-            if (!hasThunks && child.hasThunks) {
-                hasThunks = true
-            }
-
-            if (!descendantHooks && (child.hooks || child.descendantHooks)) {
-                descendantHooks = true
-            }
-        } else if (!hasWidgets && isWidget(child)) {
-            if (typeof child.destroy === "function") {
-                hasWidgets = true
-            }
-        } else if (!hasThunks && isThunk(child)) {
-            hasThunks = true;
-        }
-    }
-
-    this.count = count + descendants
-    this.hasWidgets = hasWidgets
-    this.hasThunks = hasThunks
-    this.hooks = hooks
-    this.descendantHooks = descendantHooks
-}
-
-VirtualNode.prototype.version = version
-VirtualNode.prototype.type = "VirtualNode"
-
-},{"./is-thunk":68,"./is-vhook":69,"./is-vnode":70,"./is-widget":72,"./version":73}],75:[function(require,module,exports){
-var version = require("./version")
-
-VirtualPatch.NONE = 0
-VirtualPatch.VTEXT = 1
-VirtualPatch.VNODE = 2
-VirtualPatch.WIDGET = 3
-VirtualPatch.PROPS = 4
-VirtualPatch.ORDER = 5
-VirtualPatch.INSERT = 6
-VirtualPatch.REMOVE = 7
-VirtualPatch.THUNK = 8
-
-module.exports = VirtualPatch
-
-function VirtualPatch(type, vNode, patch) {
-    this.type = Number(type)
-    this.vNode = vNode
-    this.patch = patch
-}
-
-VirtualPatch.prototype.version = version
-VirtualPatch.prototype.type = "VirtualPatch"
-
-},{"./version":73}],76:[function(require,module,exports){
-var version = require("./version")
-
-module.exports = VirtualText
-
-function VirtualText(text) {
-    this.text = String(text)
-}
-
-VirtualText.prototype.version = version
-VirtualText.prototype.type = "VirtualText"
-
-},{"./version":73}],77:[function(require,module,exports){
-var isObject = require("is-object")
-var isHook = require("../vnode/is-vhook")
-
-module.exports = diffProps
-
-function diffProps(a, b) {
-    var diff
-
-    for (var aKey in a) {
-        if (!(aKey in b)) {
-            diff = diff || {}
-            diff[aKey] = undefined
-        }
-
-        var aValue = a[aKey]
-        var bValue = b[aKey]
-
-        if (aValue === bValue) {
-            continue
-        } else if (isObject(aValue) && isObject(bValue)) {
-            if (getPrototype(bValue) !== getPrototype(aValue)) {
-                diff = diff || {}
-                diff[aKey] = bValue
-            } else if (isHook(bValue)) {
-                 diff = diff || {}
-                 diff[aKey] = bValue
-            } else {
-                var objectDiff = diffProps(aValue, bValue)
-                if (objectDiff) {
-                    diff = diff || {}
-                    diff[aKey] = objectDiff
-                }
-            }
-        } else {
-            diff = diff || {}
-            diff[aKey] = bValue
-        }
-    }
-
-    for (var bKey in b) {
-        if (!(bKey in a)) {
-            diff = diff || {}
-            diff[bKey] = b[bKey]
-        }
-    }
-
-    return diff
-}
-
-function getPrototype(value) {
-  if (Object.getPrototypeOf) {
-    return Object.getPrototypeOf(value)
-  } else if (value.__proto__) {
-    return value.__proto__
-  } else if (value.constructor) {
-    return value.constructor.prototype
-  }
-}
-
-},{"../vnode/is-vhook":69,"is-object":34}],78:[function(require,module,exports){
-var isArray = require("x-is-array")
-
-var VPatch = require("../vnode/vpatch")
-var isVNode = require("../vnode/is-vnode")
-var isVText = require("../vnode/is-vtext")
-var isWidget = require("../vnode/is-widget")
-var isThunk = require("../vnode/is-thunk")
-var handleThunk = require("../vnode/handle-thunk")
-
-var diffProps = require("./diff-props")
-
-module.exports = diff
-
-function diff(a, b) {
-    var patch = { a: a }
-    walk(a, b, patch, 0)
-    return patch
-}
-
-function walk(a, b, patch, index) {
-    if (a === b) {
-        return
-    }
-
-    var apply = patch[index]
-    var applyClear = false
-
-    if (isThunk(a) || isThunk(b)) {
-        thunks(a, b, patch, index)
-    } else if (b == null) {
-
-        // If a is a widget we will add a remove patch for it
-        // Otherwise any child widgets/hooks must be destroyed.
-        // This prevents adding two remove patches for a widget.
-        if (!isWidget(a)) {
-            clearState(a, patch, index)
-            apply = patch[index]
-        }
-
-        apply = appendPatch(apply, new VPatch(VPatch.REMOVE, a, b))
-    } else if (isVNode(b)) {
-        if (isVNode(a)) {
-            if (a.tagName === b.tagName &&
-                a.namespace === b.namespace &&
-                a.key === b.key) {
-                var propsPatch = diffProps(a.properties, b.properties)
-                if (propsPatch) {
-                    apply = appendPatch(apply,
-                        new VPatch(VPatch.PROPS, a, propsPatch))
-                }
-                apply = diffChildren(a, b, patch, apply, index)
-            } else {
-                apply = appendPatch(apply, new VPatch(VPatch.VNODE, a, b))
-                applyClear = true
-            }
-        } else {
-            apply = appendPatch(apply, new VPatch(VPatch.VNODE, a, b))
-            applyClear = true
-        }
-    } else if (isVText(b)) {
-        if (!isVText(a)) {
-            apply = appendPatch(apply, new VPatch(VPatch.VTEXT, a, b))
-            applyClear = true
-        } else if (a.text !== b.text) {
-            apply = appendPatch(apply, new VPatch(VPatch.VTEXT, a, b))
-        }
-    } else if (isWidget(b)) {
-        if (!isWidget(a)) {
-            applyClear = true
-        }
-
-        apply = appendPatch(apply, new VPatch(VPatch.WIDGET, a, b))
-    }
-
-    if (apply) {
-        patch[index] = apply
-    }
-
-    if (applyClear) {
-        clearState(a, patch, index)
-    }
-}
-
-function diffChildren(a, b, patch, apply, index) {
-    var aChildren = a.children
-    var orderedSet = reorder(aChildren, b.children)
-    var bChildren = orderedSet.children
-
-    var aLen = aChildren.length
-    var bLen = bChildren.length
-    var len = aLen > bLen ? aLen : bLen
-
-    for (var i = 0; i < len; i++) {
-        var leftNode = aChildren[i]
-        var rightNode = bChildren[i]
-        index += 1
-
-        if (!leftNode) {
-            if (rightNode) {
-                // Excess nodes in b need to be added
-                apply = appendPatch(apply,
-                    new VPatch(VPatch.INSERT, null, rightNode))
-            }
-        } else {
-            walk(leftNode, rightNode, patch, index)
-        }
-
-        if (isVNode(leftNode) && leftNode.count) {
-            index += leftNode.count
-        }
-    }
-
-    if (orderedSet.moves) {
-        // Reorder nodes last
-        apply = appendPatch(apply, new VPatch(
-            VPatch.ORDER,
-            a,
-            orderedSet.moves
-        ))
-    }
-
-    return apply
-}
-
-function clearState(vNode, patch, index) {
-    // TODO: Make this a single walk, not two
-    unhook(vNode, patch, index)
-    destroyWidgets(vNode, patch, index)
-}
-
-// Patch records for all destroyed widgets must be added because we need
-// a DOM node reference for the destroy function
-function destroyWidgets(vNode, patch, index) {
-    if (isWidget(vNode)) {
-        if (typeof vNode.destroy === "function") {
-            patch[index] = appendPatch(
-                patch[index],
-                new VPatch(VPatch.REMOVE, vNode, null)
-            )
-        }
-    } else if (isVNode(vNode) && (vNode.hasWidgets || vNode.hasThunks)) {
-        var children = vNode.children
-        var len = children.length
-        for (var i = 0; i < len; i++) {
-            var child = children[i]
-            index += 1
-
-            destroyWidgets(child, patch, index)
-
-            if (isVNode(child) && child.count) {
-                index += child.count
-            }
-        }
-    } else if (isThunk(vNode)) {
-        thunks(vNode, null, patch, index)
-    }
-}
-
-// Create a sub-patch for thunks
-function thunks(a, b, patch, index) {
-    var nodes = handleThunk(a, b)
-    var thunkPatch = diff(nodes.a, nodes.b)
-    if (hasPatches(thunkPatch)) {
-        patch[index] = new VPatch(VPatch.THUNK, null, thunkPatch)
-    }
-}
-
-function hasPatches(patch) {
-    for (var index in patch) {
-        if (index !== "a") {
-            return true
-        }
-    }
-
-    return false
-}
-
-// Execute hooks when two nodes are identical
-function unhook(vNode, patch, index) {
-    if (isVNode(vNode)) {
-        if (vNode.hooks) {
-            patch[index] = appendPatch(
-                patch[index],
-                new VPatch(
-                    VPatch.PROPS,
-                    vNode,
-                    undefinedKeys(vNode.hooks)
-                )
-            )
-        }
-
-        if (vNode.descendantHooks || vNode.hasThunks) {
-            var children = vNode.children
-            var len = children.length
-            for (var i = 0; i < len; i++) {
-                var child = children[i]
-                index += 1
-
-                unhook(child, patch, index)
-
-                if (isVNode(child) && child.count) {
-                    index += child.count
-                }
-            }
-        }
-    } else if (isThunk(vNode)) {
-        thunks(vNode, null, patch, index)
-    }
-}
-
-function undefinedKeys(obj) {
-    var result = {}
-
-    for (var key in obj) {
-        result[key] = undefined
-    }
-
-    return result
-}
-
-// List diff, naive left to right reordering
-function reorder(aChildren, bChildren) {
-    // O(M) time, O(M) memory
-    var bChildIndex = keyIndex(bChildren)
-    var bKeys = bChildIndex.keys
-    var bFree = bChildIndex.free
-
-    if (bFree.length === bChildren.length) {
-        return {
-            children: bChildren,
-            moves: null
-        }
-    }
-
-    // O(N) time, O(N) memory
-    var aChildIndex = keyIndex(aChildren)
-    var aKeys = aChildIndex.keys
-    var aFree = aChildIndex.free
-
-    if (aFree.length === aChildren.length) {
-        return {
-            children: bChildren,
-            moves: null
-        }
-    }
-
-    // O(MAX(N, M)) memory
-    var newChildren = []
-
-    var freeIndex = 0
-    var freeCount = bFree.length
-    var deletedItems = 0
-
-    // Iterate through a and match a node in b
-    // O(N) time,
-    for (var i = 0 ; i < aChildren.length; i++) {
-        var aItem = aChildren[i]
-        var itemIndex
-
-        if (aItem.key) {
-            if (bKeys.hasOwnProperty(aItem.key)) {
-                // Match up the old keys
-                itemIndex = bKeys[aItem.key]
-                newChildren.push(bChildren[itemIndex])
-
-            } else {
-                // Remove old keyed items
-                itemIndex = i - deletedItems++
-                newChildren.push(null)
-            }
-        } else {
-            // Match the item in a with the next free item in b
-            if (freeIndex < freeCount) {
-                itemIndex = bFree[freeIndex++]
-                newChildren.push(bChildren[itemIndex])
-            } else {
-                // There are no free items in b to match with
-                // the free items in a, so the extra free nodes
-                // are deleted.
-                itemIndex = i - deletedItems++
-                newChildren.push(null)
-            }
-        }
-    }
-
-    var lastFreeIndex = freeIndex >= bFree.length ?
-        bChildren.length :
-        bFree[freeIndex]
-
-    // Iterate through b and append any new keys
-    // O(M) time
-    for (var j = 0; j < bChildren.length; j++) {
-        var newItem = bChildren[j]
-
-        if (newItem.key) {
-            if (!aKeys.hasOwnProperty(newItem.key)) {
-                // Add any new keyed items
-                // We are adding new items to the end and then sorting them
-                // in place. In future we should insert new items in place.
-                newChildren.push(newItem)
-            }
-        } else if (j >= lastFreeIndex) {
-            // Add any leftover non-keyed items
-            newChildren.push(newItem)
-        }
-    }
-
-    var simulate = newChildren.slice()
-    var simulateIndex = 0
-    var removes = []
-    var inserts = []
-    var simulateItem
-
-    for (var k = 0; k < bChildren.length;) {
-        var wantedItem = bChildren[k]
-        simulateItem = simulate[simulateIndex]
-
-        // remove items
-        while (simulateItem === null && simulate.length) {
-            removes.push(remove(simulate, simulateIndex, null))
-            simulateItem = simulate[simulateIndex]
-        }
-
-        if (!simulateItem || simulateItem.key !== wantedItem.key) {
-            // if we need a key in this position...
-            if (wantedItem.key) {
-                if (simulateItem && simulateItem.key) {
-                    // if an insert doesn't put this key in place, it needs to move
-                    if (bKeys[simulateItem.key] !== k + 1) {
-                        removes.push(remove(simulate, simulateIndex, simulateItem.key))
-                        simulateItem = simulate[simulateIndex]
-                        // if the remove didn't put the wanted item in place, we need to insert it
-                        if (!simulateItem || simulateItem.key !== wantedItem.key) {
-                            inserts.push({key: wantedItem.key, to: k})
-                        }
-                        // items are matching, so skip ahead
-                        else {
-                            simulateIndex++
-                        }
-                    }
-                    else {
-                        inserts.push({key: wantedItem.key, to: k})
-                    }
-                }
-                else {
-                    inserts.push({key: wantedItem.key, to: k})
-                }
-                k++
-            }
-            // a key in simulate has no matching wanted key, remove it
-            else if (simulateItem && simulateItem.key) {
-                removes.push(remove(simulate, simulateIndex, simulateItem.key))
-            }
-        }
-        else {
-            simulateIndex++
-            k++
-        }
-    }
-
-    // remove all the remaining nodes from simulate
-    while(simulateIndex < simulate.length) {
-        simulateItem = simulate[simulateIndex]
-        removes.push(remove(simulate, simulateIndex, simulateItem && simulateItem.key))
-    }
-
-    // If the only moves we have are deletes then we can just
-    // let the delete patch remove these items.
-    if (removes.length === deletedItems && !inserts.length) {
-        return {
-            children: newChildren,
-            moves: null
-        }
-    }
-
-    return {
-        children: newChildren,
-        moves: {
-            removes: removes,
-            inserts: inserts
-        }
-    }
-}
-
-function remove(arr, index, key) {
-    arr.splice(index, 1)
-
-    return {
-        from: index,
-        key: key
-    }
-}
-
-function keyIndex(children) {
-    var keys = {}
-    var free = []
-    var length = children.length
-
-    for (var i = 0; i < length; i++) {
-        var child = children[i]
-
-        if (child.key) {
-            keys[child.key] = i
-        } else {
-            free.push(i)
-        }
-    }
-
-    return {
-        keys: keys,     // A hash of key name to index
-        free: free      // An array of unkeyed item indices
-    }
-}
-
-function appendPatch(apply, patch) {
-    if (apply) {
-        if (isArray(apply)) {
-            apply.push(patch)
-        } else {
-            apply = [apply, patch]
-        }
-
-        return apply
-    } else {
-        return patch
-    }
-}
-
-},{"../vnode/handle-thunk":67,"../vnode/is-thunk":68,"../vnode/is-vnode":70,"../vnode/is-vtext":71,"../vnode/is-widget":72,"../vnode/vpatch":75,"./diff-props":77,"x-is-array":79}],79:[function(require,module,exports){
-var nativeIsArray = Array.isArray
-var toString = Object.prototype.toString
-
-module.exports = nativeIsArray || isArray
-
-function isArray(obj) {
-    return toString.call(obj) === "[object Array]"
-}
-
-},{}],80:[function(require,module,exports){
+},{"turf-distance":23}],29:[function(require,module,exports){
 var L = require("leaflet"),
   PathFinder = require("geojson-path-finder").default,
   util = require("./util"),
@@ -41004,7 +38255,7 @@ module.exports = L.Class.extend({
   },
 });
 
-},{"./util":81,"@turf/distance":3,"@turf/helpers":6,"geojson-path-finder":27,"leaflet":37,"leaflet-routing-machine":35,"turf-featurecollection":45,"turf-nearest":48}],81:[function(require,module,exports){
+},{"./util":30,"@turf/distance":3,"@turf/helpers":6,"geojson-path-finder":15,"leaflet":21,"leaflet-routing-machine":19,"turf-featurecollection":25,"turf-nearest":28}],30:[function(require,module,exports){
 var L = require('leaflet');
 
 module.exports = {
@@ -41024,4 +38275,4 @@ module.exports = {
     }
 };
 
-},{"leaflet":37}]},{},[2]);
+},{"leaflet":21}]},{},[2]);
