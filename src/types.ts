@@ -1,4 +1,4 @@
-import { Position } from "@turf/helpers";
+import { Position } from "geojson";
 
 /**
  * Vertex key, a unique identifier for a vertex of a graph

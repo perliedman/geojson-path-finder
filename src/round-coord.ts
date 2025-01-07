@@ -1,4 +1,4 @@
-import { Position } from "@turf/helpers";
+import { Position } from "geojson";
 
 export default function roundCoord(
   coord: Position,

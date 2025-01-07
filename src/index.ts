@@ -1,11 +1,12 @@
+import { lineString } from "@turf/helpers";
 import {
   Feature,
   FeatureCollection,
-  lineString,
+  GeoJsonProperties,
   LineString,
   Point,
   Position,
-} from "@turf/helpers";
+} from "geojson";
 import { compactNode } from "./compactor";
 import findPath from "./dijkstra";
 import preprocess from "./preprocessor";
@@ -13,7 +14,10 @@ import roundCoord from "./round-coord";
 import { defaultKey } from "./topology";
 import { Key, Path, PathFinderGraph, PathFinderOptions } from "./types";
 
-export default class PathFinder<TEdgeReduce, TProperties> {
+export default class PathFinder<
+  TEdgeReduce,
+  TProperties extends GeoJsonProperties
+> {
   graph: PathFinderGraph<TEdgeReduce>;
   options: PathFinderOptions<TEdgeReduce, TProperties>;
 
