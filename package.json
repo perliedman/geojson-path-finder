@@ -21,13 +21,14 @@
   "author": "Per Liedman <per@liedman.net>",
   "license": "ISC",
   "dependencies": {
-    "@turf/distance": "^6.5.0",
-    "@turf/explode": "^6.5.0",
-    "@turf/helpers": "^6.5.0",
+    "@turf/distance": "^7.2.0",
+    "@turf/explode": "^7.2.0",
+    "@turf/helpers": "^7.2.0",
     "tinyqueue": "^2.0.3"
   },
   "devDependencies": {
     "@tsconfig/node16": "^1.0.3",
+    "@types/geojson": "^7946.0.15",
     "@types/node": "^18.11.7",
     "esm": "^3.2.25",
     "typedoc": "^0.23.22",

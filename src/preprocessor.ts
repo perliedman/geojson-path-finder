@@ -1,5 +1,11 @@
 import distance from "@turf/distance";
-import { FeatureCollection, LineString, point, Position } from "@turf/helpers";
+import { point } from "@turf/helpers";
+import {
+  FeatureCollection,
+  GeoJsonProperties,
+  Geometry,
+  Position,
+} from "geojson";
 import type {
   PathFinderGraph,
   PathFinderOptions,
@@ -10,8 +16,11 @@ import type {
 import compactGraph from "./compactor";
 import createTopology from "./topology";
 
-export default function preprocess<TEdgeReduce, TProperties>(
-  network: FeatureCollection<LineString, TProperties>,
+export default function preprocess<
+  TEdgeReduce,
+  TProperties extends GeoJsonProperties
+>(
+  network: FeatureCollection<Geometry, TProperties>,
   options: PathFinderOptions<TEdgeReduce, TProperties> = {}
 ): PathFinderGraph<TEdgeReduce> {
   const topology = createTopology(network, options);

@@ -1,4 +1,4 @@
-import { Position } from "@turf/helpers";
+import { Position } from "geojson";
 import { Coordinates, PathFinderOptions, Vertices, Key } from "./types";
 
 /**
