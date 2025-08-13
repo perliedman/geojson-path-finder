@@ -1,37 +1,41 @@
 {
-  "name": "geojson-path-finder-demo",
+  "name": "hike-site",
   "version": "1.0.0",
-  "description": "Demo for geojson-path-finder",
-  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview"
+  },
   "dependencies": {
-    "@turf/distance": "^6.0.1",
-    "@turf/helpers": "^6.1.4",
+    "@fortawesome/fontawesome-free": "^7.0.0",
+    "@turf/distance": "^7.2.0",
     "@turf/line-distance": "^4.7.3",
-    "faucet": "^0.0.1",
-    "gauge-progress": "^2.1.12",
     "geojson-path-finder": "^2.0.2",
-    "leaflet": "^1.0.2",
-    "leaflet-routing-machine": "^3.2.4",
-    "leaflet.icon.glyph": "^0.2.0",
-    "turf-explode": "^1.0.1",
-    "turf-extent": "^1.0.4",
-    "turf-nearest": "^1.0.2"
+    "ol": "^10.6.1",
+    "proj4": "^2.9.0",
+    "rbush-knn": "git+https://github.com/mourner/rbush-knn.git",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "browserify": "^13.0.0"
+    "@types/geojson": "^7946.0.16",
+    "@types/proj4": "^2.5.2",
+    "@types/rbush": "^3.0.0",
+    "@types/react": "^18.2.14",
+    "@types/react-dom": "^18.2.6",
+    "@typescript-eslint/eslint-plugin": "^5.61.0",
+    "@typescript-eslint/parser": "^5.61.0",
+    "@vitejs/plugin-react": "^4.0.1",
+    "autoprefixer": "^10.4.14",
+    "eslint": "^8.44.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.1",
+    "postcss": "^8.4.26",
+    "tailwindcss": "^3.3.3",
+    "typescript": "^5.0.2",
+    "vite": "^4.4.0"
   },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "cp -a node_modules/leaflet/dist/images . && cp -a node_modules/leaflet/dist/leaflet.css . && cp -a node_modules/leaflet-routing-machine/dist/leaflet-routing-machine.css . && browserify index.js >bundle.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/perliedman/geojson-path-finder.git"
-  },
-  "author": "Per Liedman <per@liedman.net>",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/perliedman/geojson-path-finder/issues"
-  },
-  "homepage": "https://github.com/perliedman/geojson-path-finder#readme"
+  "license": "GPL-3.0-only"
 }
