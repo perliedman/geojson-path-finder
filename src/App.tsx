@@ -5,7 +5,7 @@ import TileLayer from "ol/layer/Tile";
 import "ol/ol.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import { DEVICE_PIXEL_RATIO } from "ol/has.js";
-import RouteNetwork from "./RouteNetwork";
+import RouteNetwork, { NetworkProperties } from "./RouteNetwork";
 import { Feature } from "ol";
 import { toLonLat, transform, transformExtent } from "ol/proj";
 import { Coordinate } from "ol/coordinate";
@@ -25,7 +25,11 @@ import About from "./About";
 import Fill from "ol/style/Fill";
 import Stroke from "ol/style/Stroke";
 
-function App({ network }: { network: FeatureCollection<GeoJSONLineString> }) {
+function App({
+  network,
+}: {
+  network: FeatureCollection<GeoJSONLineString, NetworkProperties>;
+}) {
   const mapContainer: MutableRefObject<HTMLDivElement | null> = useRef(null);
 
   const map = useLmMap(mapContainer);
@@ -94,7 +98,7 @@ function useLmMap(containerRef: MutableRefObject<HTMLDivElement | null>) {
 
 function useRouteNetwork(
   map: Map | null,
-  trails: FeatureCollection<GeoJSONLineString>
+  trails: FeatureCollection<GeoJSONLineString, NetworkProperties>
 ) {
   const [routeNetwork, setRouteNetwork] = useState<RouteNetwork | null>(null);
   useEffect(() => {
@@ -165,10 +169,7 @@ function useWaypoints(
   useEffect(() => {
     const containerElement = mapContainer.current;
     if (containerElement && map && routeNetwork) {
-      let longpress = false;
-
       const onLongPress = (e: MouseEvent) => {
-        longpress = true;
         e.preventDefault();
         const coord = routeNetwork.getClosestNetworkCoordinate(
           toLonLat(map.getEventCoordinate(e), "EPSG:3857")

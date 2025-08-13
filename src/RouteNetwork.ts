@@ -1,59 +1,22 @@
-import VectorLayer from "ol/layer/Vector";
-import VectorSource from "ol/source/Vector";
-import GeoJSON from "ol/format/GeoJSON";
-import LineString from "ol/geom/LineString";
-
-import Feature, { FeatureLike } from "ol/Feature";
-import { Pixel } from "ol/pixel";
-import Map from "ol/Map";
 import PathFinder from "geojson-path-finder";
 import { Coordinate } from "ol/coordinate";
 import RBush from "rbush";
 import knn from "rbush-knn";
-import { outlinedStyle } from "./map-style";
 import {
   FeatureCollection,
   LineString as GeoJSONLineString,
   Feature as GeoJSONFeature,
-  Point as GeoJSONPoint,
   Point,
   Position,
 } from "geojson";
 import distance from "@turf/distance";
-import { transform } from "ol/proj";
-import Style from "ol/style/Style";
-import Stroke from "ol/style/Stroke";
 
-type NetworkProperties = {
+export type NetworkProperties = {
   highway: string;
   maxspeed?: number | string;
   oneway?: string;
   junction?: string;
 };
-
-const routeColor = "#4466aa";
-const highlightColor = "#ff4422";
-
-// type GeoJSONPoint = {
-//   type: "Point";
-//   coordinates: Coordinate;
-// };
-
-// type GeoJSONLineString = {
-//   type: "LineString";
-//   coordinates: Coordinate[];
-// };
-
-// type GeoJSONFeature<T> = {
-//   type: "Feature";
-//   properties: Record<string, unknown>;
-//   geometry: T;
-// };
-
-// type FeatureCollection<T> = {
-//   type: "FeatureCollection";
-//   features: GeoJSONFeature<T>[];
-// };
 
 export default class RouteNetwork {
   highlightedRef: string | null = null;
@@ -76,31 +39,6 @@ export default class RouteNetwork {
       )
       .flat(2);
     this.coordinatesIndex.load(coordinates);
-
-    // const features = Object.keys(this.pathFinder.graph.vertices)
-    //   .map((vertex1) =>
-    //     Object.keys(this.pathFinder.graph.vertices[vertex1])
-    //       .filter((vertex2) => {
-    //         const w = this.pathFinder.graph.vertices[vertex1][vertex2];
-    //         return w != null && w !== Infinity;
-    //       })
-    //       .map(
-    //         (vertex2) =>
-    //           new Feature(
-    //             new LineString([vertexToCoord(vertex1), vertexToCoord(vertex2)])
-    //           )
-    //       )
-    //   )
-    //   .flat();
-    // const source = (this.source = new VectorSource<Feature<LineString>>({
-    //   features,
-    // }));
-
-    // this.layer = new VectorLayer({
-    //   source,
-    //   style: new Style({ stroke: new Stroke({ color: routeColor, width: 2 }) }),
-    //   zIndex: 1,
-    // });
   }
 
   route(waypoints: Coordinate[]) {
@@ -128,11 +66,6 @@ class CoordinateRBush extends RBush<Coordinate> {
   compareMinY(a: Coordinate, b: Coordinate) {
     return a[1] - b[1];
   }
-}
-function isLineString(
-  feature: GeoJSONFeature<GeoJSONLineString | GeoJSONPoint>
-): feature is GeoJSONFeature<GeoJSONLineString> {
-  return feature.geometry.type === "LineString";
 }
 
 function point(coordinates: Coordinate): GeoJSONFeature<Point> {
