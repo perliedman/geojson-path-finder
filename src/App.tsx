@@ -12,7 +12,7 @@ import { Coordinate } from "ol/coordinate";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import Translate, { TranslateEvent } from "ol/interaction/Translate";
-import { LineString, Point } from "ol/geom";
+import { LineString, Point, Polygon } from "ol/geom";
 import Style from "ol/style/Style";
 import Icon from "ol/style/Icon";
 import { outlinedStyle } from "./map-style";
@@ -22,6 +22,8 @@ import { boundingExtent } from "ol/extent";
 import { XYZ } from "ol/source";
 import { apiToken } from "./config";
 import About from "./About";
+import Fill from "ol/style/Fill";
+import Stroke from "ol/style/Stroke";
 
 function App({ network }: { network: FeatureCollection<GeoJSONLineString> }) {
   const mapContainer: MutableRefObject<HTMLDivElement | null> = useRef(null);
@@ -98,17 +100,43 @@ function useRouteNetwork(
   useEffect(() => {
     if (map) {
       const routeNetwork = new RouteNetwork(trails);
+      const extent = transformExtent(
+        boundingExtent(routeNetwork.coordinatesIndex.all()),
+        "EPSG:4326",
+        "EPSG:3857"
+      );
+      const worldPolygon = new Polygon([
+        [
+          [0, 0],
+          [0, 1e9],
+          [1e9, 1e9],
+          [1e9, 0],
+          [0, 0],
+        ],
+        [
+          [extent[0], extent[1]],
+          [extent[0], extent[3]],
+          [extent[2], extent[3]],
+          [extent[2], extent[1]],
+          [extent[0], extent[1]],
+        ],
+      ]);
+      const maskFeature = new Feature(worldPolygon);
+      const maskLayer = new VectorLayer({
+        source: new VectorSource({ features: [maskFeature] }),
+        style: new Style({
+          fill: new Fill({ color: [0, 0, 0, 0.3] }),
+          stroke: new Stroke({ color: "orange", width: 1 }),
+        }),
+        zIndex: 1,
+      });
+      map.addLayer(maskLayer);
       // map.addLayer(routeNetwork.layer);
-      map
-        .getView()
-        .fit(
-          transformExtent(
-            boundingExtent(routeNetwork.coordinatesIndex.all()),
-            "EPSG:4326",
-            "EPSG:3857"
-          )
-        );
+      map.getView().fit(extent, { padding: [10, 10, 10, 10] });
       setRouteNetwork(routeNetwork);
+      return () => {
+        map.removeLayer(maskLayer);
+      };
     }
   }, [map, trails]);
 
